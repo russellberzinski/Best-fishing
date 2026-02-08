@@ -3,34 +3,130 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BestFishingSecrets — Test Feed</title>
+  <title>BestFishingSecrets — Feed</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#0b1220;color:#e8edf7}
-    header{padding:18px 16px;border-bottom:1px solid #223152;background:#0f1a33;position:sticky;top:0}
+    :root{
+      --bg:#0b1220; --card:#0f1a33; --text:#e8edf7; --muted:#b7c0d6; --line:#223152;
+      --accent:#60a5fa;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:var(--text)}
+    header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
     h1{margin:0;font-size:18px}
-    .wrap{max-width:900px;margin:0 auto;padding:16px}
-    .status{padding:10px 12px;border:1px solid #223152;border-radius:12px;background:#0f1a33;margin-bottom:12px;color:#b7c0d6}
-    .row{display:flex;gap:10px;margin-bottom:12px}
-    button{padding:10px 14px;border-radius:10px;border:1px solid #223152;background:#0f1a33;color:#e8edf7;cursor:pointer}
-    button:hover{background:#13204a}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-    .card{border:1px solid #223152;border-radius:16px;background:#0f1a33;padding:14px}
-    .title{font-weight:700;margin:0 0 6px;font-size:16px}
-    .meta{color:#b7c0d6;font-size:13px;margin:0 0 10px}
-    .price{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #223152;background:#0b1220;font-weight:700}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .status{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:12px;color:var(--muted);white-space:pre-wrap}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    button,input,select,textarea{font:inherit}
+    button{
+      border:1px solid var(--line);background:var(--card);color:var(--text);
+      padding:10px 12px;border-radius:12px;cursor:pointer
+    }
+    button:hover{filter:brightness(1.1)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
+    .title{font-weight:800;margin:0 0 6px;font-size:16px}
+    .meta{color:var(--muted);font-size:13px;margin:0 0 10px}
+    .price{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0b1220;font-weight:800}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .form{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:var(--card);
+      padding:14px;
+      margin-bottom:14px;
+    }
+    .form h2{margin:0 0 10px;font-size:15px}
+    .fields{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .fields .full{grid-column:1 / -1}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    input,select,textarea{
+      width:100%;
+      border:1px solid var(--line);
+      background:#0b1220;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      outline:none;
+    }
+    textarea{min-height:90px;resize:vertical}
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
+    .danger{color:#fecaca}
+    .ok{color:#bbf7d0}
+    @media (max-width:720px){
+      .fields{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
-  <header><h1>BestFishingSecrets — Firestore Test Feed</h1></header>
+  <header><h1>BestFishingSecrets — Live Feed</h1></header>
 
   <div class="wrap">
     <div id="status" class="status">Loading…</div>
 
-    <div class="row">
-      <button id="reloadBtn">Reload Posts</button>
-      <button id="addBtn">Create Test Post</button>
+    <!-- Post a Catch form -->
+    <div class="form">
+      <h2>Post a Catch</h2>
+      <div class="fields">
+        <div>
+          <label for="title">Title</label>
+          <input id="title" placeholder="e.g., 5lb bass at dawn" />
+        </div>
+
+        <div>
+          <label for="state">State</label>
+          <select id="state">
+            <option value="">Select a state…</option>
+            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+            <option>Wisconsin</option><option>Wyoming</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="price">Price (USD)</label>
+          <input id="price" type="number" step="0.01" min="0" placeholder="9.99" />
+        </div>
+
+        <div>
+          <label for="previewUrl">Preview link (optional)</label>
+          <input id="previewUrl" placeholder="https://..." />
+        </div>
+
+        <div class="full">
+          <label for="fullUrl">Full link (optional)</label>
+          <input id="fullUrl" placeholder="https://..." />
+        </div>
+
+        <div class="full">
+          <label for="secretLocation">Secret location (stored, not displayed)</label>
+          <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
+          <div class="hint">For now we store this field in Firestore. Later we’ll “lock” it so only buyers can see it.</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="postBtn">Post catch</button>
+        <button id="reloadBtn" type="button">Reload posts</button>
+      </div>
+      <div class="hint">If posting fails, it’s usually Firestore Rules blocking writes.</div>
     </div>
 
+    <!-- Feed -->
     <div id="grid" class="grid"></div>
   </div>
 
@@ -41,10 +137,12 @@
       collection,
       getDocs,
       addDoc,
-      serverTimestamp
+      serverTimestamp,
+      query,
+      orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // Your exact Firebase config
+    // ✅ Your Firebase config (linked to the correct Web App)
     const firebaseConfig = {
       apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
       authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
@@ -61,64 +159,128 @@
     const statusEl = document.getElementById("status");
     const gridEl = document.getElementById("grid");
 
-    function renderCard(p) {
-      const title = p.title || "Untitled Catch";
-      const state = p.state || "Unknown";
-      const price = p.price || "0";
+    const titleEl = document.getElementById("title");
+    const stateEl = document.getElementById("state");
+    const priceEl = document.getElementById("price");
+    const previewUrlEl = document.getElementById("previewUrl");
+    const fullUrlEl = document.getElementById("fullUrl");
+    const secretLocationEl = document.getElementById("secretLocation");
+
+    const postBtn = document.getElementById("postBtn");
+    const reloadBtn = document.getElementById("reloadBtn");
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function cardHTML(p){
+      const title = p.title ?? "Untitled catch";
+      const state = p.state ?? "Unknown";
+      const priceRaw = p.price;
+      const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
+
+      const previewUrl = p.previewUrl ?? "";
+      const fullUrl = p.fullUrl ?? "";
 
       return `
         <div class="card">
-          <p class="title">${title}</p>
-          <p class="meta">State: <b>${state}</b></p>
-          <p class="meta"><span class="price">$${price}</span></p>
+          <p class="title">${escapeHtml(title)}</p>
+          <p class="meta">State: <b>${escapeHtml(state)}</b></p>
+          <p class="meta"><span class="price">$${escapeHtml(price)}</span></p>
+          ${previewUrl ? `<p class="meta"><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">Preview link</a></p>` : ""}
+          ${fullUrl ? `<p class="meta"><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener">Full link</a></p>` : ""}
         </div>
       `;
     }
 
-    async function loadPosts() {
-      statusEl.textContent = "Loading posts…";
+    async function loadPosts(){
       gridEl.innerHTML = "";
+      statusEl.textContent = "Loading posts…";
 
-      try {
-        const snap = await getDocs(collection(db, "posts"));
+      try{
+        let snap;
+        try{
+          const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+          snap = await getDocs(q);
+        }catch(e){
+          // If createdAt doesn't exist / index not ready, fall back
+          snap = await getDocs(collection(db, "posts"));
+        }
 
-        if (snap.empty) {
-          statusEl.textContent = "No posts yet. Click 'Create Test Post'.";
+        if (snap.empty){
+          statusEl.textContent = "No posts yet. Use the Post a Catch form above.";
           return;
         }
 
         let html = "";
-        snap.forEach(doc => {
-          html += renderCard(doc.data());
-        });
-
+        snap.forEach(d => html += cardHTML(d.data()));
         gridEl.innerHTML = html;
         statusEl.textContent = `Loaded ${snap.size} post(s).`;
-      } catch (err) {
+      }catch(err){
         console.error(err);
-        statusEl.textContent = "Error loading posts. Check Firestore rules.";
+        statusEl.textContent =
+          "❌ Error loading posts.\n\nMost common cause: Firestore Rules blocking reads.\nOpen the browser console for details.";
       }
     }
 
-    async function createTestPost() {
-      try {
+    function isValidUrl(s){
+      if (!s) return true;
+      try { new URL(s); return true; } catch { return false; }
+    }
+
+    async function postCatch(){
+      const title = titleEl.value.trim();
+      const state = stateEl.value.trim();
+      const priceStr = priceEl.value.trim();
+      const previewUrl = previewUrlEl.value.trim();
+      const fullUrl = fullUrlEl.value.trim();
+      const secretLocation = secretLocationEl.value.trim();
+
+      if (!title) { statusEl.textContent = "❌ Please enter a title."; return; }
+      if (!state) { statusEl.textContent = "❌ Please select a state."; return; }
+      if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
+      if (!isValidUrl(previewUrl) || !isValidUrl(fullUrl)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
+
+      postBtn.disabled = true;
+      statusEl.textContent = "Posting…";
+
+      try{
         await addDoc(collection(db, "posts"), {
-          title: "Test Bass Catch",
-          state: "Wisconsin",
-          price: 9.99,
+          title,
+          state,
+          price: Number(priceStr),
+          previewUrl: previewUrl || null,
+          fullUrl: fullUrl || null,
+          secretLocation: secretLocation || null,  // stored but NOT displayed
           createdAt: serverTimestamp()
         });
 
-        statusEl.textContent = "Test post created.";
-        loadPosts();
-      } catch (err) {
+        // Clear inputs
+        titleEl.value = "";
+        stateEl.value = "";
+        priceEl.value = "";
+        previewUrlEl.value = "";
+        fullUrlEl.value = "";
+        secretLocationEl.value = "";
+
+        statusEl.textContent = "✅ Posted!";
+        await loadPosts();
+      }catch(err){
         console.error(err);
-        statusEl.textContent = "Error creating post. Check Firestore rules.";
+        statusEl.textContent =
+          "❌ Post failed.\n\nMost common cause: Firestore Rules blocking writes.\nNext step: add Google login + require auth for posting.";
+      }finally{
+        postBtn.disabled = false;
       }
     }
 
-    document.getElementById("reloadBtn").onclick = loadPosts;
-    document.getElementById("addBtn").onclick = createTestPost;
+    postBtn.addEventListener("click", postCatch);
+    reloadBtn.addEventListener("click", loadPosts);
 
     loadPosts();
   </script>
