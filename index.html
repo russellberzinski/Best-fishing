@@ -58,6 +58,17 @@
     .hint{font-size:12px;color:var(--muted);margin-top:8px}
     .danger{color:#fecaca}
     .ok{color:#bbf7d0}
+
+    /* Image styling */
+    .post-img{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      display:block;
+      margin:0 0 10px 0;
+      background:#0b1220;
+    }
+    .img-note{font-size:12px;color:var(--muted);margin-top:6px}
     @media (max-width:720px){
       .fields{grid-template-columns:1fr}
     }
@@ -115,6 +126,13 @@
           <input id="fullUrl" placeholder="https://..." />
         </div>
 
+        <!-- ✅ NEW: Photo upload -->
+        <div class="full">
+          <label for="photo">Photo (uploaded to Cloudinary)</label>
+          <input id="photo" type="file" accept="image/*" />
+          <div class="img-note">Optional, but recommended. JPG/PNG/HEIC should work. Large files may take longer on mobile.</div>
+        </div>
+
         <div class="full">
           <label for="secretLocation">Secret location (stored, not displayed)</label>
           <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
@@ -153,6 +171,11 @@
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+    // ✅ Cloudinary config (NO secrets needed for unsigned upload)
+    const CLOUDINARY_CLOUD_NAME = "dhuakqubc";
+    const CLOUDINARY_UPLOAD_PRESET = "emiktt1b";
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
     // ✅ Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
@@ -179,6 +202,9 @@
     const fullUrlEl = document.getElementById("fullUrl");
     const secretLocationEl = document.getElementById("secretLocation");
 
+    // ✅ NEW: photo input
+    const photoEl = document.getElementById("photo");
+
     const postBtn = document.getElementById("postBtn");
     const reloadBtn = document.getElementById("reloadBtn");
 
@@ -187,180 +213,4 @@
     authRow.className = "row";
     authRow.innerHTML = `
       <button id="loginBtn" type="button">Sign in with Google</button>
-      <button id="logoutBtn" type="button" style="display:none">Sign out</button>
-      <span id="userInfo" class="meta"></span>
-    `;
-    statusEl.insertAdjacentElement("afterend", authRow);
-
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userInfo = document.getElementById("userInfo");
-
-    loginBtn.addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (e) {
-        console.error(e);
-        statusEl.textContent = "❌ Sign-in failed. (If you’re on mobile, popups can be blocked — tell me and I’ll switch to redirect login.)";
-      }
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-      } catch (e) {
-        console.error(e);
-        statusEl.textContent = "❌ Sign-out failed.";
-      }
-    });
-
-    let currentUser = null;
-
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-
-      if (user) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `Signed in as ${user.displayName || user.email || "User"}`;
-        postBtn.disabled = false;
-        postBtn.textContent = "Post catch";
-      } else {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        userInfo.textContent = "Not signed in";
-        postBtn.disabled = true;
-        postBtn.textContent = "Sign in to post";
-      }
-    });
-
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    function cardHTML(p){
-      const title = p.title ?? "Untitled catch";
-      const state = p.state ?? "Unknown";
-      const priceRaw = p.price;
-      const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
-
-      const previewUrl = p.previewUrl ?? "";
-      const fullUrl = p.fullUrl ?? "";
-
-      return `
-        <div class="card">
-          <p class="title">${escapeHtml(title)}</p>
-          <p class="meta">State: <b>${escapeHtml(state)}</b></p>
-          <p class="meta"><span class="price">$${escapeHtml(price)}</span></p>
-          ${previewUrl ? `<p class="meta"><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">Preview link</a></p>` : ""}
-          ${fullUrl ? `<p class="meta"><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener">Full link</a></p>` : ""}
-        </div>
-      `;
-    }
-
-    async function loadPosts(){
-      gridEl.innerHTML = "";
-      statusEl.textContent = "Loading posts…";
-
-      try{
-        let snap;
-        try{
-          const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-          snap = await getDocs(q);
-        }catch(e){
-          snap = await getDocs(collection(db, "posts"));
-        }
-
-        if (snap.empty){
-          statusEl.textContent = "No posts yet. Use the Post a Catch form above.";
-          return;
-        }
-
-        let html = "";
-        snap.forEach(d => html += cardHTML(d.data()));
-        gridEl.innerHTML = html;
-        statusEl.textContent = `Loaded ${snap.size} post(s).`;
-      }catch(err){
-        console.error(err);
-        statusEl.textContent =
-          "❌ Error loading posts.\n\nMost common cause: Firestore Rules blocking reads.\nOpen the browser console for details.";
-      }
-    }
-
-    function isValidUrl(s){
-      if (!s) return true;
-      try { new URL(s); return true; } catch { return false; }
-    }
-
-    async function postCatch(){
-      if (!currentUser) {
-        statusEl.textContent = "❌ Please sign in first.";
-        return;
-      }
-
-      const title = titleEl.value.trim();
-      const state = stateEl.value.trim();
-      const priceStr = priceEl.value.trim();
-      const previewUrl = previewUrlEl.value.trim();
-      const fullUrl = fullUrlEl.value.trim();
-      const secretLocation = secretLocationEl.value.trim();
-
-      if (!title) { statusEl.textContent = "❌ Please enter a title."; return; }
-      if (!state) { statusEl.textContent = "❌ Please select a state."; return; }
-      if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
-      if (!isValidUrl(previewUrl) || !isValidUrl(fullUrl)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
-
-      postBtn.disabled = true;
-      statusEl.textContent = "Posting…";
-
-      try{
-        await addDoc(collection(db, "posts"), {
-          title,
-          state,
-          price: Number(priceStr),
-          previewUrl: previewUrl || null,
-          fullUrl: fullUrl || null,
-
-          // Stored but NOT displayed
-          secretLocation: secretLocation || null,
-
-          // Auth info
-          userId: currentUser.uid,
-          userName: currentUser.displayName || null,
-          userEmail: currentUser.email || null,
-
-          createdAt: serverTimestamp()
-        });
-
-        // Clear inputs
-        titleEl.value = "";
-        stateEl.value = "";
-        priceEl.value = "";
-        previewUrlEl.value = "";
-        fullUrlEl.value = "";
-        secretLocationEl.value = "";
-
-        statusEl.textContent = "✅ Posted!";
-        await loadPosts();
-      }catch(err){
-        console.error(err);
-        statusEl.textContent =
-          "❌ Post failed.\n\nMost common causes:\n- Firestore Rules block writes\n- Auth not enabled\n\nOpen console for details.";
-      }finally{
-        // Re-enable depending on auth state
-        postBtn.disabled = !currentUser;
-      }
-    }
-
-    postBtn.addEventListener("click", postCatch);
-    reloadBtn.addEventListener("click", loadPosts);
-
-    loadPosts();
-  </script>
-</body>
-</html>
+      <button id
