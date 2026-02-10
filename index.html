@@ -56,9 +56,7 @@
     }
     textarea{min-height:90px;resize:vertical}
     .hint{font-size:12px;color:var(--muted);margin-top:8px}
-    .danger{color:#fecaca}
     .ok{color:#bbf7d0}
-
     .post-img{
       width:100%;
       border-radius:14px;
@@ -68,6 +66,14 @@
       background:#0b1220;
     }
     .img-note{font-size:12px;color:var(--muted);margin-top:6px}
+    .pill{
+      border:1px solid var(--line);
+      background:#0b1220;
+      padding:8px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+    }
     @media (max-width:720px){
       .fields{grid-template-columns:1fr}
     }
@@ -79,7 +85,42 @@
   <div class="wrap">
     <div id="status" class="status">Loading…</div>
 
-    <!-- Auth row gets inserted here by JS -->
+    <!-- Auth row inserted by JS -->
+
+    <div class="row" style="margin-top:8px">
+      <span class="pill">✅ Anyone can browse posts</span>
+      <span class="pill">🔒 Sign-in required to post</span>
+    </div>
+
+    <div class="form">
+      <h2>Browse</h2>
+      <div class="fields">
+        <div class="full">
+          <label for="filterState">Filter by state (optional)</label>
+          <select id="filterState">
+            <option value="">All states</option>
+            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+            <option>Wisconsin</option><option>Wyoming</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="reloadBtn" type="button">Reload posts</button>
+      </div>
+      <div class="hint">Tip: choose a state to filter, then tap “Reload posts”.</div>
+    </div>
 
     <div class="form">
       <h2>Post a Catch</h2>
@@ -133,15 +174,14 @@
         <div class="full">
           <label for="secretLocation">Secret location (stored, not displayed)</label>
           <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
-          <div class="hint">For now we store this field in Firestore. Later we’ll “lock” it so only buyers can see it.</div>
+          <div class="hint">This is stored in Firestore but never shown on the public feed.</div>
         </div>
       </div>
 
       <div class="row" style="margin-top:10px">
         <button id="postBtn" disabled>Sign in to post</button>
-        <button id="reloadBtn" type="button">Reload posts</button>
       </div>
-      <div class="hint">Posting is disabled until you sign in.</div>
+      <div id="postHint" class="hint">You can browse without signing in. Sign in only if you want to post.</div>
     </div>
 
     <div id="grid" class="grid"></div>
@@ -156,7 +196,8 @@
       addDoc,
       serverTimestamp,
       query,
-      orderBy
+      orderBy,
+      where
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     import {
@@ -173,6 +214,8 @@
     const statusEl = document.getElementById("status");
     const gridEl = document.getElementById("grid");
 
+    const filterStateEl = document.getElementById("filterState");
+
     const titleEl = document.getElementById("title");
     const stateEl = document.getElementById("state");
     const priceEl = document.getElementById("price");
@@ -183,8 +226,9 @@
 
     const postBtn = document.getElementById("postBtn");
     const reloadBtn = document.getElementById("reloadBtn");
+    const postHintEl = document.getElementById("postHint");
 
-    // ====== Always show real errors on-page (so it never “hangs”) ======
+    // ====== Always show real errors on-page ======
     window.addEventListener("unhandledrejection", (e) => {
       statusEl.textContent = "❌ Unhandled promise:\n" + (e.reason?.message || e.reason || e);
     });
@@ -209,16 +253,10 @@
     };
 
     // ====== Init ======
-    let app, db, auth, provider;
-    try{
-      app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      auth = getAuth(app);
-      provider = new GoogleAuthProvider();
-    }catch(err){
-      statusEl.textContent = "❌ Firebase init failed:\n" + (err?.message || String(err));
-      throw err;
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
     // ====== Auth UI ======
     const authRow = document.createElement("div");
@@ -245,12 +283,16 @@
         userInfo.textContent = `Signed in as ${user.displayName || user.email || "User"}`;
         postBtn.disabled = false;
         postBtn.textContent = "Post catch";
+        postHintEl.textContent = "✅ You’re signed in — you can post now.";
+        postHintEl.classList.add("ok");
       } else {
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
         userInfo.textContent = "Not signed in";
         postBtn.disabled = true;
         postBtn.textContent = "Sign in to post";
+        postHintEl.textContent = "You can browse without signing in. Sign in only if you want to post.";
+        postHintEl.classList.remove("ok");
       }
     });
 
@@ -258,7 +300,6 @@
     try{
       await getRedirectResult(auth);
     }catch(err){
-      // If redirect result fails, show it but don’t crash the app
       statusEl.textContent = "⚠️ Redirect sign-in error:\n" + (err?.message || String(err));
     }
 
@@ -268,7 +309,6 @@
         await signInWithPopup(auth, provider);
         statusEl.textContent = "✅ Signed in.";
       } catch (e) {
-        // Popup blocked / not allowed on mobile -> redirect fallback
         const msg = (e?.message || "").toLowerCase();
         const code = (e?.code || "").toLowerCase();
         const looksLikePopupBlocked =
@@ -280,7 +320,6 @@
           return;
         }
 
-        console.error(e);
         statusEl.textContent = "❌ Sign-in failed:\n" + (e?.message || String(e));
       }
     });
@@ -290,7 +329,6 @@
         await signOut(auth);
         statusEl.textContent = "Signed out.";
       } catch (e) {
-        console.error(e);
         statusEl.textContent = "❌ Sign-out failed:\n" + (e?.message || String(e));
       }
     });
@@ -350,32 +388,57 @@
       return await res.json();
     }
 
-    // ====== Load posts (won’t silently hang) ======
+    // ====== Load posts (public, no auth required) ======
     async function loadPosts(){
       gridEl.innerHTML = "";
       statusEl.textContent = "Loading posts…";
 
+      const chosenState = filterStateEl.value.trim();
+
       try{
         let snap;
         try{
-          const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+          const base = collection(db, "posts");
+
+          // Prefer ordered reads; add optional filter
+          const q = chosenState
+            ? query(base, where("state", "==", chosenState), orderBy("createdAt", "desc"))
+            : query(base, orderBy("createdAt", "desc"));
+
           snap = await getDocs(q);
         }catch(e){
-          // If index/orderBy fails, fallback to basic collection read
+          // If index/orderBy fails (common early on), fallback to basic read
           snap = await getDocs(collection(db, "posts"));
         }
 
         if (!snap || snap.empty){
-          statusEl.textContent = "No posts yet. Use the Post a Catch form above.";
+          statusEl.textContent = chosenState
+            ? `No posts found for ${chosenState} yet.`
+            : "No posts yet. Sign in if you want to post the first one.";
+          return;
+        }
+
+        // If we fell back to unordered read, apply filter client-side too
+        let posts = [];
+        snap.forEach(d => posts.push(d.data()));
+
+        if (chosenState) {
+          posts = posts.filter(p => (p.state || "").trim() === chosenState);
+        }
+
+        if (!posts.length) {
+          statusEl.textContent = `No posts found for ${chosenState} yet.`;
           return;
         }
 
         let html = "";
-        snap.forEach(d => html += cardHTML(d.data()));
+        for (const p of posts) html += cardHTML(p);
         gridEl.innerHTML = html;
-        statusEl.textContent = `Loaded ${snap.size} post(s).`;
+
+        statusEl.textContent = chosenState
+          ? `Loaded ${posts.length} post(s) for ${chosenState}.`
+          : `Loaded ${posts.length} post(s).`;
       }catch(err){
-        console.error(err);
         statusEl.textContent =
           "❌ Error loading posts.\n\nMost common causes:\n- Firestore Rules blocking reads\n- Firestore not created\n- Network/adblock\n\nDetails:\n" + (err?.message || String(err));
       }
@@ -383,7 +446,7 @@
 
     async function postCatch(){
       if (!currentUser) {
-        statusEl.textContent = "❌ Please sign in first.";
+        statusEl.textContent = "❌ Please sign in first to post.";
         return;
       }
 
@@ -422,16 +485,12 @@
           price: Number(priceStr),
           previewUrl: previewUrl || null,
           fullUrl: fullUrl || null,
-
           imageUrl: imageUrl,
           imagePublicId: imagePublicId,
-
           secretLocation: secretLocation || null,
-
           userId: currentUser.uid,
           userName: currentUser.displayName || null,
           userEmail: currentUser.email || null,
-
           createdAt: serverTimestamp()
         });
 
@@ -446,9 +505,7 @@
         statusEl.textContent = "✅ Posted!";
         await loadPosts();
       }catch(err){
-        console.error(err);
-        statusEl.textContent =
-          "❌ Post failed.\n\nDetails:\n" + (err?.message || String(err));
+        statusEl.textContent = "❌ Post failed.\n\nDetails:\n" + (err?.message || String(err));
       }finally{
         postBtn.disabled = !currentUser;
       }
@@ -456,6 +513,7 @@
 
     postBtn.addEventListener("click", postCatch);
     reloadBtn.addEventListener("click", loadPosts);
+    filterStateEl.addEventListener("change", loadPosts);
 
     // Start
     await loadPosts();
