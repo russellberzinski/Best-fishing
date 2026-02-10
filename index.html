@@ -4,295 +4,547 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>BestFishingSecrets — Feed</title>
-  <meta name="description" content="Public sneak peeks. Sign in to post. Creators can delete their own posts." />
   <style>
     :root{
-      --bg:#0b1220; --card:#0f1a33; --card2:#0d1730; --text:#e8edf7; --muted:#b7c0d6; --line:#223152;
-      --accent:#60a5fa; --danger:#ef4444;
-      --radius:16px;
+      --bg:#0b1220; --card:#0f1a33; --text:#e8edf7; --muted:#b7c0d6; --line:#223152;
+      --accent:#60a5fa;
     }
     *{box-sizing:border-box}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:var(--text)}
-    header{padding:16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
-    .top{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    h1{margin:0;font-size:16px;letter-spacing:.2px}
-    .btn{border:1px solid var(--line);background:transparent;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer}
-    .btn.primary{border-color:transparent;background:var(--accent);color:#061121;font-weight:800}
-    .btn.danger{border-color:transparent;background:var(--danger);color:#1b0b0b;font-weight:800}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
+    header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+    h1{margin:0;font-size:18px}
     .wrap{max-width:980px;margin:0 auto;padding:16px}
-    .status{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .composer{border:1px solid var(--line);background:var(--card);border-radius:var(--radius);padding:12px;margin-bottom:14px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    input, textarea{
-      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);
-      background:var(--card2);color:var(--text);outline:none
+    .status{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:12px;color:var(--muted);white-space:pre-wrap}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    button,input,select,textarea{font:inherit}
+    button{
+      border:1px solid var(--line);background:var(--card);color:var(--text);
+      padding:10px 12px;border-radius:12px;cursor:pointer
+    }
+    button:hover{filter:brightness(1.1)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
+    .title{font-weight:800;margin:0 0 6px;font-size:16px}
+    .meta{color:var(--muted);font-size:13px;margin:0 0 10px}
+    .price{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0b1220;font-weight:800}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .form{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:var(--card);
+      padding:14px;
+      margin-bottom:14px;
+    }
+    .form h2{margin:0 0 10px;font-size:15px}
+    .fields{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .fields .full{grid-column:1 / -1}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    input,select,textarea{
+      width:100%;
+      border:1px solid var(--line);
+      background:#0b1220;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      outline:none;
     }
     textarea{min-height:90px;resize:vertical}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-    .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);overflow:hidden}
-    .thumb{aspect-ratio:16/9;background:#0a1020;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-    .meta{padding:12px}
-    .meta h3{margin:0 0 6px;font-size:14px}
-    .sub{color:var(--muted);font-size:12px;display:flex;gap:8px;flex-wrap:wrap}
-    .actions{margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .pill{border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted);font-size:12px}
-    .toast{
-      position:fixed;left:50%;transform:translateX(-50%);
-      bottom:18px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.16);
-      color:#fff;padding:10px 12px;border-radius:12px;display:none;max-width:min(92vw,720px)
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
+    .ok{color:#bbf7d0}
+    .post-img{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      display:block;
+      margin:0 0 10px 0;
+      background:#0b1220;
+    }
+    .img-note{font-size:12px;color:var(--muted);margin-top:6px}
+    .pill{
+      border:1px solid var(--line);
+      background:#0b1220;
+      padding:8px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    @media (max-width:720px){
+      .fields{grid-template-columns:1fr}
     }
   </style>
 </head>
-
 <body>
-  <header>
-    <div class="top">
-      <h1>BestFishingSecrets — Public Feed</h1>
-      <div class="row" style="width:auto">
-        <button id="loginBtn" class="btn primary">Sign in</button>
-        <button id="logoutBtn" class="btn" style="display:none">Sign out</button>
-      </div>
-    </div>
-  </header>
+  <header><h1>BestFishingSecrets — Live Feed</h1></header>
 
-  <main class="wrap">
-    <div class="status">
-      <div>
-        <div id="authLine">Status: Not signed in</div>
-        <div style="font-size:12px;color:var(--muted)">Anyone can read. Sign in to post. Creators can delete their own posts.</div>
-      </div>
-      <div class="pill" id="modePill">Public read</div>
+  <div class="wrap">
+    <div id="status" class="status">Loading…</div>
+
+    <div class="row" style="margin-top:8px">
+      <span class="pill">✅ Anyone can browse posts</span>
+      <span class="pill">🔒 Sign-in required to post</span>
+      <span class="pill">🧠 Secret location stored separately</span>
     </div>
 
-    <section class="composer" id="composer" style="display:none">
-      <div class="row">
-        <input id="title" placeholder="Title (example: Winter bass bite - sneak peek)" maxlength="120" />
+    <div class="form">
+      <h2>Browse</h2>
+      <div class="fields">
+        <div class="full">
+          <label for="filterState">Filter by state (optional)</label>
+          <select id="filterState">
+            <option value="">All states</option>
+            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+            <option>Wisconsin</option><option>Wyoming</option>
+          </select>
+        </div>
       </div>
+
       <div class="row" style="margin-top:10px">
-        <textarea id="teaser" placeholder="Teaser text (keep it short)..."></textarea>
+        <button id="reloadBtn" type="button">Reload posts</button>
       </div>
+      <div class="hint">Tip: choose a state to filter, then tap “Reload posts”.</div>
+    </div>
+
+    <div class="form">
+      <h2>Post a Catch</h2>
+      <div class="fields">
+        <div>
+          <label for="title">Title</label>
+          <input id="title" placeholder="e.g., 5lb bass at dawn" />
+        </div>
+
+        <div>
+          <label for="state">State</label>
+          <select id="state">
+            <option value="">Select a state…</option>
+            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+            <option>Wisconsin</option><option>Wyoming</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="price">Price (USD)</label>
+          <input id="price" type="number" step="0.01" min="0" placeholder="9.99" />
+        </div>
+
+        <div>
+          <label for="previewUrl">Preview link (optional)</label>
+          <input id="previewUrl" placeholder="https://..." />
+        </div>
+
+        <div class="full">
+          <label for="fullUrl">Full link (optional)</label>
+          <input id="fullUrl" placeholder="https://..." />
+        </div>
+
+        <div class="full">
+          <label for="photo">Photo (uploaded to Cloudinary)</label>
+          <input id="photo" type="file" accept="image/*" />
+          <div class="img-note">Optional, but recommended. Large files may take longer on mobile.</div>
+        </div>
+
+        <div class="full">
+          <label for="secretLocation">Secret location (stored privately)</label>
+          <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
+          <div class="hint">This is stored in a private collection and not readable from the public feed.</div>
+        </div>
+      </div>
+
       <div class="row" style="margin-top:10px">
-        <input id="thumbUrl" placeholder="Thumbnail image URL (optional)" />
+        <button id="postBtn" disabled>Sign in to post</button>
       </div>
-      <div class="row" style="margin-top:10px;align-items:center;justify-content:space-between">
-        <div style="color:var(--muted);font-size:12px">Tip: If you use Cloudinary, paste the secure image URL here.</div>
-        <button id="postBtn" class="btn primary">Post</button>
-      </div>
-    </section>
+      <div id="postHint" class="hint">You can browse without signing in. Sign in only if you want to post.</div>
+    </div>
 
-    <section>
-      <div class="grid" id="feed"></div>
-    </section>
-  </main>
+    <div id="grid" class="grid"></div>
+  </div>
 
-  <div class="toast" id="toast"></div>
-
-  <!-- Firebase (v10 modular) -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      setDoc,
+      doc,
+      serverTimestamp,
+      query,
+      orderBy,
+      where
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
     import {
       getAuth,
       GoogleAuthProvider,
       signInWithPopup,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      serverTimestamp,
-      query,
-      orderBy,
-      onSnapshot,
-      deleteDoc,
-      doc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+      signInWithRedirect,
+      getRedirectResult,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    // ✅ PASTE YOUR FIREBASE CONFIG HERE
+    // ====== DOM ======
+    const statusEl = document.getElementById("status");
+    const gridEl = document.getElementById("grid");
+
+    const filterStateEl = document.getElementById("filterState");
+
+    const titleEl = document.getElementById("title");
+    const stateEl = document.getElementById("state");
+    const priceEl = document.getElementById("price");
+    const previewUrlEl = document.getElementById("previewUrl");
+    const fullUrlEl = document.getElementById("fullUrl");
+    const secretLocationEl = document.getElementById("secretLocation");
+    const photoEl = document.getElementById("photo");
+
+    const postBtn = document.getElementById("postBtn");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const postHintEl = document.getElementById("postHint");
+
+    // ====== Always show real errors on-page ======
+    window.addEventListener("unhandledrejection", (e) => {
+      statusEl.textContent = "❌ Unhandled promise:\n" + (e.reason?.message || e.reason || e);
+    });
+    window.addEventListener("error", (e) => {
+      statusEl.textContent = "❌ JS error:\n" + (e.message || e);
+    });
+
+    // ====== Cloudinary (unsigned upload) ======
+    const CLOUDINARY_CLOUD_NAME = "dhuakqubc";
+    const CLOUDINARY_UPLOAD_PRESET = "emiktt1b";
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+    // ====== Firebase config ======
     const firebaseConfig = {
-      apiKey: "PASTE_YOURS",
-      authDomain: "PASTE_YOURS",
-      projectId: "PASTE_YOURS",
-      storageBucket: "PASTE_YOURS",
-      messagingSenderId: "PASTE_YOURS",
-      appId: "PASTE_YOURS"
+      apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
+      authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
+      projectId: "bestfishingsecrets-932cf",
+      storageBucket: "bestfishingsecrets-932cf.firebasestorage.app",
+      messagingSenderId: "387299114354",
+      appId: "1:387299114354:web:cbadda074f9dd7083ef1eb",
+      measurementId: "G-Z8L28MXNEG"
     };
 
+    // ====== Init ======
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
+    const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    const el = (id) => document.getElementById(id);
-    const toast = (msg) => {
-      el("toast").textContent = msg;
-      el("toast").style.display = "block";
-      setTimeout(() => (el("toast").style.display = "none"), 2600);
-    };
+    // ====== Auth UI ======
+    const authRow = document.createElement("div");
+    authRow.className = "row";
+    authRow.innerHTML = `
+      <button id="loginBtn" type="button">Sign in with Google</button>
+      <button id="logoutBtn" type="button" style="display:none">Sign out</button>
+      <span id="userInfo" class="meta"></span>
+    `;
+    statusEl.insertAdjacentElement("afterend", authRow);
 
-    const feedEl = el("feed");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userInfo = document.getElementById("userInfo");
+
     let currentUser = null;
 
-    // AUTH UI
-    el("loginBtn").onclick = async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (e) {
-        console.error(e);
-        toast(e?.message || "Sign in failed");
-      }
-    };
-
-    el("logoutBtn").onclick = async () => {
-      try {
-        await signOut(auth);
-      } catch (e) {
-        console.error(e);
-        toast("Sign out failed");
-      }
-    };
-
     onAuthStateChanged(auth, (user) => {
-      currentUser = user || null;
+      currentUser = user;
 
-      if (currentUser) {
-        el("authLine").textContent = `Signed in as: ${currentUser.displayName || currentUser.email}`;
-        el("loginBtn").style.display = "none";
-        el("logoutBtn").style.display = "inline-block";
-        el("composer").style.display = "block";
-        el("modePill").textContent = "Signed in";
+      if (user) {
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        userInfo.textContent = `Signed in as ${user.displayName || user.email || "User"}`;
+        postBtn.disabled = false;
+        postBtn.textContent = "Post catch";
+        postHintEl.textContent = "✅ You’re signed in — you can post now.";
+        postHintEl.classList.add("ok");
       } else {
-        el("authLine").textContent = "Status: Not signed in";
-        el("loginBtn").style.display = "inline-block";
-        el("logoutBtn").style.display = "none";
-        el("composer").style.display = "none";
-        el("modePill").textContent = "Public read";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        userInfo.textContent = "Not signed in";
+        postBtn.disabled = true;
+        postBtn.textContent = "Sign in to post";
+        postHintEl.textContent = "You can browse without signing in. Sign in only if you want to post.";
+        postHintEl.classList.remove("ok");
       }
     });
 
-    // CREATE POST (stores uid so delete permissions can work)
-    el("postBtn").onclick = async () => {
-      if (!currentUser) return toast("Please sign in first.");
+    // Handle redirect sign-in result (mobile fallback)
+    try{
+      await getRedirectResult(auth);
+    }catch(err){
+      statusEl.textContent = "⚠️ Redirect sign-in error:\n" + (err?.message || String(err));
+    }
 
-      const title = el("title").value.trim();
-      const teaser = el("teaser").value.trim();
-      const thumbUrl = el("thumbUrl").value.trim();
-
-      if (!title || !teaser) return toast("Add a title + teaser.");
-
-      el("postBtn").disabled = true;
+    loginBtn.addEventListener("click", async () => {
+      statusEl.textContent = "Signing in…";
       try {
-        await addDoc(collection(db, "posts"), {
-          title,
-          teaser,
-          thumbUrl: thumbUrl || "",
-          uid: currentUser.uid,                              // ✅ REQUIRED for ownership
-          authorName: currentUser.displayName || "",
-          authorEmail: currentUser.email || "",
-          createdAt: serverTimestamp()
-        });
-
-        el("title").value = "";
-        el("teaser").value = "";
-        el("thumbUrl").value = "";
-        toast("Posted!");
+        await signInWithPopup(auth, provider);
+        statusEl.textContent = "✅ Signed in.";
       } catch (e) {
-        console.error(e);
-        toast(e?.message || "Post failed");
-      } finally {
-        el("postBtn").disabled = false;
+        const msg = (e?.message || "").toLowerCase();
+        const code = (e?.code || "").toLowerCase();
+        const looksLikePopupBlocked =
+          code.includes("popup") || msg.includes("popup") || msg.includes("blocked") || msg.includes("closed");
+
+        if (looksLikePopupBlocked) {
+          statusEl.textContent = "Popup blocked. Switching to redirect sign-in…";
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+
+        statusEl.textContent = "❌ Sign-in failed:\n" + (e?.message || String(e));
       }
-    };
+    });
 
-    // DELETE POST (only shows button if currentUser owns it)
-    async function deletePost(postId) {
-      if (!currentUser) return toast("Sign in first.");
+    logoutBtn.addEventListener("click", async () => {
       try {
-        await deleteDoc(doc(db, "posts", postId));
-        toast("Deleted.");
+        await signOut(auth);
+        statusEl.textContent = "Signed out.";
       } catch (e) {
-        console.error(e);
-        toast(e?.message || "Delete failed (check rules).");
+        statusEl.textContent = "❌ Sign-out failed:\n" + (e?.message || String(e));
+      }
+    });
+
+    // ====== Helpers ======
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function isValidUrl(s){
+      if (!s) return true;
+      try { new URL(s); return true; } catch { return false; }
+    }
+
+    function cardHTML(p){
+      const title = p.title ?? "Untitled catch";
+      const state = p.state ?? "Unknown";
+      const priceRaw = p.price;
+      const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
+
+      // Standardized fields (supports older docs too)
+      const imageUrl = p.imageUrl ?? p.previewUrl ?? "";
+      const previewUrl = p.previewUrl ?? "";
+      const fullUrl = p.fullUrl ?? "";
+
+      return `
+        <div class="card">
+          ${imageUrl ? `<img class="post-img" src="${escapeHtml(imageUrl)}" alt="Catch photo" loading="lazy" />` : ""}
+          <p class="title">${escapeHtml(title)}</p>
+          <p class="meta">State: <b>${escapeHtml(state)}</b></p>
+          <p class="meta"><span class="price">$${escapeHtml(price)}</span></p>
+          ${previewUrl ? `<p class="meta"><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">Preview link</a></p>` : ""}
+          ${fullUrl ? `<p class="meta"><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener">Full link</a></p>` : ""}
+        </div>
+      `;
+    }
+
+    async function uploadToCloudinary(file){
+      const maxMB = 12;
+      const sizeMB = file.size / (1024*1024);
+      if (sizeMB > maxMB) throw new Error(`Image too large (${sizeMB.toFixed(1)}MB). Choose under ${maxMB}MB.`);
+      if (!file.type.startsWith("image/")) throw new Error("Selected file is not an image.");
+
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+      const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: "POST", body: fd });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Cloudinary upload failed (${res.status}). ${text}`);
+      }
+      return await res.json();
+    }
+
+    // ====== Load posts (public) ======
+    async function loadPosts(){
+      gridEl.innerHTML = "";
+      statusEl.textContent = "Loading posts…";
+
+      const chosenState = filterStateEl.value.trim();
+
+      try{
+        let snap;
+        try{
+          const base = collection(db, "posts");
+
+          const q = chosenState
+            ? query(base, where("state", "==", chosenState), orderBy("createdAt", "desc"))
+            : query(base, orderBy("createdAt", "desc"));
+
+          snap = await getDocs(q);
+        }catch(e){
+          snap = await getDocs(collection(db, "posts"));
+        }
+
+        if (!snap || snap.empty){
+          statusEl.textContent = chosenState
+            ? `No posts found for ${chosenState} yet.`
+            : "No posts yet. Sign in if you want to post the first one.";
+          return;
+        }
+
+        let posts = [];
+        snap.forEach(d => posts.push(d.data()));
+
+        if (chosenState) {
+          posts = posts.filter(p => (p.state || "").trim() === chosenState);
+        }
+
+        if (!posts.length) {
+          statusEl.textContent = `No posts found for ${chosenState} yet.`;
+          return;
+        }
+
+        let html = "";
+        for (const p of posts) html += cardHTML(p);
+        gridEl.innerHTML = html;
+
+        statusEl.textContent = chosenState
+          ? `Loaded ${posts.length} post(s) for ${chosenState}.`
+          : `Loaded ${posts.length} post(s).`;
+      }catch(err){
+        statusEl.textContent =
+          "❌ Error loading posts.\n\nMost common causes:\n- Firestore Rules blocking reads\n- Firestore not created\n- Network/adblock\n\nDetails:\n" + (err?.message || String(err));
       }
     }
 
-    // FEED LISTENER
-    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-    onSnapshot(q, (snap) => {
-      feedEl.innerHTML = "";
-      snap.forEach((d) => {
-        const p = d.data();
-        const postId = d.id;
+    // ====== Post catch (public doc + private secret doc) ======
+    async function postCatch(){
+      if (!currentUser) {
+        statusEl.textContent = "❌ Please sign in first to post.";
+        return;
+      }
 
-        const canDelete = currentUser && p.uid && currentUser.uid === p.uid;
+      const title = titleEl.value.trim();
+      const state = stateEl.value.trim();
+      const priceStr = priceEl.value.trim();
 
-        const card = document.createElement("div");
-        card.className = "card";
+      // Optional links
+      const previewLinkTyped = previewUrlEl.value.trim();
+      const fullLinkTyped = fullUrlEl.value.trim();
 
-        const thumb = document.createElement("div");
-        thumb.className = "thumb";
-        if (p.thumbUrl) {
-          const img = document.createElement("img");
-          img.src = p.thumbUrl;
-          img.alt = p.title || "thumbnail";
-          img.loading = "lazy";
-          thumb.appendChild(img);
-        } else {
-          thumb.textContent = "No thumbnail";
+      // Secret stored privately (NOT in /posts)
+      const secretLocation = secretLocationEl.value.trim();
+
+      if (!title) { statusEl.textContent = "❌ Please enter a title."; return; }
+      if (!state) { statusEl.textContent = "❌ Please select a state."; return; }
+      if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
+      if (!isValidUrl(previewLinkTyped) || !isValidUrl(fullLinkTyped)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
+
+      postBtn.disabled = true;
+
+      let imageUrl = null;
+      let imagePublicId = null;
+
+      try{
+        const file = photoEl.files && photoEl.files[0] ? photoEl.files[0] : null;
+        if (file) {
+          statusEl.textContent = "Uploading photo…";
+          const uploaded = await uploadToCloudinary(file);
+          imageUrl = uploaded.secure_url || uploaded.url || null;
+          imagePublicId = uploaded.public_id || null;
+          if (!imageUrl) throw new Error("Upload succeeded but no image URL was returned.");
         }
 
-        const meta = document.createElement("div");
-        meta.className = "meta";
+        statusEl.textContent = "Posting…";
 
-        const h3 = document.createElement("h3");
-        h3.textContent = p.title || "Untitled";
+        // Standardize previewUrl/fullUrl:
+        // - if user typed links, use them
+        // - else if uploaded image exists, set both to imageUrl
+        // - else null
+        const previewUrl = previewLinkTyped || imageUrl || null;
+        const fullUrl = fullLinkTyped || imageUrl || null;
 
-        const sub = document.createElement("div");
-        sub.className = "sub";
-        const author = (p.authorName || p.authorEmail || "Anonymous").trim();
-        sub.textContent = author ? `By ${author}` : "By Anonymous";
+        // 1) Create public post doc
+        const postRef = await addDoc(collection(db, "posts"), {
+          title,
+          state,
+          price: Number(priceStr),
 
-        const teaser = document.createElement("div");
-        teaser.style.marginTop = "10px";
-        teaser.style.color = "var(--text)";
-        teaser.style.fontSize = "13px";
-        teaser.textContent = p.teaser || "";
+          // media
+          imageUrl: imageUrl,
+          imagePublicId: imagePublicId,
+          previewUrl: previewUrl,
+          fullUrl: fullUrl,
 
-        const actions = document.createElement("div");
-        actions.className = "actions";
+          // secret is NOT stored here
+          hasSecret: !!secretLocation,
 
-        const left = document.createElement("div");
-        left.className = "pill";
-        left.textContent = canDelete ? "Your post" : "Public";
+          userId: currentUser.uid,
+          userName: currentUser.displayName || null,
+          userEmail: currentUser.email || null,
+          createdAt: serverTimestamp()
+        });
 
-        const right = document.createElement("div");
-        if (canDelete) {
-          const delBtn = document.createElement("button");
-          delBtn.className = "btn danger";
-          delBtn.textContent = "Delete";
-          delBtn.onclick = () => {
-            const ok = confirm("Delete this post?");
-            if (ok) deletePost(postId);
-          };
-          right.appendChild(delBtn);
+        // 2) Store secret in a private collection with SAME doc id
+        if (secretLocation) {
+          await setDoc(doc(db, "postSecrets", postRef.id), {
+            postId: postRef.id,
+            ownerId: currentUser.uid,
+            secretLocation: secretLocation,
+            createdAt: serverTimestamp()
+          });
         }
 
-        actions.appendChild(left);
-        actions.appendChild(right);
+        // Clear form
+        titleEl.value = "";
+        stateEl.value = "";
+        priceEl.value = "";
+        previewUrlEl.value = "";
+        fullUrlEl.value = "";
+        secretLocationEl.value = "";
+        photoEl.value = "";
 
-        meta.appendChild(h3);
-        meta.appendChild(sub);
-        meta.appendChild(teaser);
-        meta.appendChild(actions);
+        statusEl.textContent = "✅ Posted!";
+        await loadPosts();
+      }catch(err){
+        statusEl.textContent = "❌ Post failed.\n\nDetails:\n" + (err?.message || String(err));
+      }finally{
+        postBtn.disabled = !currentUser;
+      }
+    }
 
-        card.appendChild(thumb);
-        card.appendChild(meta);
-        feedEl.appendChild(card);
-      });
-    });
+    postBtn.addEventListener("click", postCatch);
+    reloadBtn.addEventListener("click", loadPosts);
+    filterStateEl.addEventListener("change", loadPosts);
+
+    // Start
+    await loadPosts();
   </script>
 </body>
 </html>
