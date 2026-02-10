@@ -85,11 +85,10 @@
   <div class="wrap">
     <div id="status" class="status">Loading…</div>
 
-    <!-- Auth row inserted by JS -->
-
     <div class="row" style="margin-top:8px">
       <span class="pill">✅ Anyone can browse posts</span>
       <span class="pill">🔒 Sign-in required to post</span>
+      <span class="pill">🧠 Secret location stored separately</span>
     </div>
 
     <div class="form">
@@ -172,9 +171,9 @@
         </div>
 
         <div class="full">
-          <label for="secretLocation">Secret location (stored, not displayed)</label>
+          <label for="secretLocation">Secret location (stored privately)</label>
           <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
-          <div class="hint">This is stored in Firestore but never shown on the public feed.</div>
+          <div class="hint">This is stored in a private collection and not readable from the public feed.</div>
         </div>
       </div>
 
@@ -194,6 +193,8 @@
       collection,
       getDocs,
       addDoc,
+      setDoc,
+      doc,
       serverTimestamp,
       query,
       orderBy,
@@ -354,9 +355,10 @@
       const priceRaw = p.price;
       const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
 
+      // Standardized fields (supports older docs too)
+      const imageUrl = p.imageUrl ?? p.previewUrl ?? "";
       const previewUrl = p.previewUrl ?? "";
       const fullUrl = p.fullUrl ?? "";
-      const imageUrl = p.imageUrl ?? "";
 
       return `
         <div class="card">
@@ -388,7 +390,7 @@
       return await res.json();
     }
 
-    // ====== Load posts (public, no auth required) ======
+    // ====== Load posts (public) ======
     async function loadPosts(){
       gridEl.innerHTML = "";
       statusEl.textContent = "Loading posts…";
@@ -400,14 +402,12 @@
         try{
           const base = collection(db, "posts");
 
-          // Prefer ordered reads; add optional filter
           const q = chosenState
             ? query(base, where("state", "==", chosenState), orderBy("createdAt", "desc"))
             : query(base, orderBy("createdAt", "desc"));
 
           snap = await getDocs(q);
         }catch(e){
-          // If index/orderBy fails (common early on), fallback to basic read
           snap = await getDocs(collection(db, "posts"));
         }
 
@@ -418,7 +418,6 @@
           return;
         }
 
-        // If we fell back to unordered read, apply filter client-side too
         let posts = [];
         snap.forEach(d => posts.push(d.data()));
 
@@ -444,6 +443,7 @@
       }
     }
 
+    // ====== Post catch (public doc + private secret doc) ======
     async function postCatch(){
       if (!currentUser) {
         statusEl.textContent = "❌ Please sign in first to post.";
@@ -453,14 +453,18 @@
       const title = titleEl.value.trim();
       const state = stateEl.value.trim();
       const priceStr = priceEl.value.trim();
-      const previewUrl = previewUrlEl.value.trim();
-      const fullUrl = fullUrlEl.value.trim();
+
+      // Optional links
+      const previewLinkTyped = previewUrlEl.value.trim();
+      const fullLinkTyped = fullUrlEl.value.trim();
+
+      // Secret stored privately (NOT in /posts)
       const secretLocation = secretLocationEl.value.trim();
 
       if (!title) { statusEl.textContent = "❌ Please enter a title."; return; }
       if (!state) { statusEl.textContent = "❌ Please select a state."; return; }
       if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
-      if (!isValidUrl(previewUrl) || !isValidUrl(fullUrl)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
+      if (!isValidUrl(previewLinkTyped) || !isValidUrl(fullLinkTyped)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
 
       postBtn.disabled = true;
 
@@ -479,21 +483,45 @@
 
         statusEl.textContent = "Posting…";
 
-        await addDoc(collection(db, "posts"), {
+        // Standardize previewUrl/fullUrl:
+        // - if user typed links, use them
+        // - else if uploaded image exists, set both to imageUrl
+        // - else null
+        const previewUrl = previewLinkTyped || imageUrl || null;
+        const fullUrl = fullLinkTyped || imageUrl || null;
+
+        // 1) Create public post doc
+        const postRef = await addDoc(collection(db, "posts"), {
           title,
           state,
           price: Number(priceStr),
-          previewUrl: previewUrl || null,
-          fullUrl: fullUrl || null,
+
+          // media
           imageUrl: imageUrl,
           imagePublicId: imagePublicId,
-          secretLocation: secretLocation || null,
+          previewUrl: previewUrl,
+          fullUrl: fullUrl,
+
+          // secret is NOT stored here
+          hasSecret: !!secretLocation,
+
           userId: currentUser.uid,
           userName: currentUser.displayName || null,
           userEmail: currentUser.email || null,
           createdAt: serverTimestamp()
         });
 
+        // 2) Store secret in a private collection with SAME doc id
+        if (secretLocation) {
+          await setDoc(doc(db, "postSecrets", postRef.id), {
+            postId: postRef.id,
+            ownerId: currentUser.uid,
+            secretLocation: secretLocation,
+            createdAt: serverTimestamp()
+          });
+        }
+
+        // Clear form
         titleEl.value = "";
         stateEl.value = "";
         priceEl.value = "";
