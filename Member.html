@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Member — BestFishingSecrets</title>
+  <style>
+    :root{
+      --bg:#0b120d; --card:#121b12; --text:#f3f1e7; --muted:#c9c2aa; --line:#2c3a2b; --accent:#7aa35a; --accent2:#b08a5a;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:var(--text)}
+    header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px;margin-bottom:12px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .avatar{width:76px;height:76px;border-radius:16px;border:1px solid var(--line);object-fit:cover;background:#0e1510}
+    .name{font-weight:900;font-size:18px;margin:0}
+    .meta{color:var(--muted);font-size:13px;margin:6px 0 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .post-img{width:100%;border-radius:14px;border:1px solid var(--line);display:block;margin:0 0 10px 0;background:#0e1510}
+    .title{font-weight:800;margin:0 0 6px;font-size:16px}
+    .pill{display:inline-block;border:1px solid var(--line);background:rgba(176,138,90,.14);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .btn{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(18,27,18,.92), rgba(11,18,13,.92));
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font:inherit;
+    }
+    .btn:hover{filter:brightness(1.08)}
+    .kv{margin:0 0 8px 0;font-size:13px;color:var(--muted);word-break:break-word}
+    .kv b{color:var(--text)}
+    .hr{height:1px;background:rgba(201,194,170,.18);border:0;margin:12px 0}
+    @media (max-width:720px){
+      .avatar{width:64px;height:64px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row" style="justify-content:space-between">
+      <div><b>BestFishingSecrets</b> — Member</div>
+      <div class="row" style="gap:10px">
+        <a href="index.html">← Back to feed</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div id="status" class="card">Loading…</div>
+
+    <div id="profileCard" class="card" style="display:none">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <img id="avatar" class="avatar" alt="Profile photo">
+          <div>
+            <p id="name" class="name"></p>
+            <p id="homeState" class="meta"></p>
+            <p id="memberUid" class="meta"></p>
+          </div>
+        </div>
+
+        <button id="copyLinkBtn" class="btn" type="button" style="display:none">Copy profile link</button>
+      </div>
+
+      <hr class="hr" />
+
+      <p id="bio" class="meta" style="margin-top:0; white-space:pre-wrap"></p>
+
+      <div id="statsRow" class="row" style="margin-top:10px; gap:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><b>Posts</b></div>
+        <span id="count" class="pill">0</span>
+      </div>
+      <p class="meta" style="margin:8px 0 0">Free previews only. Paid content is still locked on the member page.</p>
+    </div>
+
+    <div id="grid" class="grid"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, doc, getDoc, collection, getDocs, query, where, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
+      authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
+      projectId: "bestfishingsecrets-932cf",
+      storageBucket: "bestfishingsecrets-932cf.firebasestorage.app",
+      messagingSenderId: "387299114354",
+      appId: "1:387299114354:web:cbadda074f9dd7083ef1eb",
+      measurementId: "G-Z8L28MXNEG"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const statusEl = document.getElementById("status");
+    const profileCard = document.getElementById("profileCard");
+    const avatarEl = document.getElementById("avatar");
+    const nameEl = document.getElementById("name");
+    const homeStateEl = document.getElementById("homeState");
+    const memberUidEl = document.getElementById("memberUid");
+    const bioEl = document.getElementById("bio");
+    const statsRow = document.getElementById("statsRow");
+
+    const gridEl = document.getElementById("grid");
+    const countEl = document.getElementById("count");
+
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+    function money(n){
+      if (typeof n !== "number") return null;
+      return "$" + n.toFixed(2);
+    }
+
+    function postCardHTML(p){
+      const title = p.title ?? "Untitled catch";
+      const state = p.state ?? "Unknown";
+      const imageUrl = p.imageUrl ?? "";
+      const price = (typeof p.price === "number") ? p.price : null;
+
+      const created = p.createdAt?.toDate ? p.createdAt.toDate() : null;
+      const createdStr = created ? created.toLocaleString() : "";
+
+      return `
+        <div class="card">
+          ${imageUrl ? `<img class="post-img" src="${esc(imageUrl)}" alt="Catch photo" loading="lazy" />` : ""}
+          <p class="title">${esc(title)}</p>
+          <p class="kv"><b>State:</b> ${esc(state)}</p>
+          ${price !== null ? `<p class="kv"><b>Price:</b> ${esc(money(price))}</p>` : ""}
+          ${createdStr ? `<p class="kv"><b>Posted:</b> ${esc(createdStr)}</p>` : ""}
+          ${p.hasPaid ? `<span class="pill">Has paid unlock</span>` : `<span class="pill">Free-only</span>`}
+        </div>
+      `;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const uid = params.get("uid");
+
+    if (!uid){
+      statusEl.textContent = "❌ Missing uid. Open from the feed via “View my page”.";
+      throw new Error("Missing uid");
+    }
+
+    async function copyProfileLink(){
+      try{
+        await navigator.clipboard.writeText(location.href);
+        copyLinkBtn.textContent = "Copied!";
+        setTimeout(() => (copyLinkBtn.textContent = "Copy profile link"), 1200);
+      }catch{
+        // fallback: show prompt
+        prompt("Copy this link:", location.href);
+      }
+    }
+
+    copyLinkBtn.addEventListener("click", copyProfileLink);
+
+    async function load(){
+      statusEl.textContent = "Loading profile…";
+
+      // ===== Load profile doc =====
+      try{
+        const pSnap = await getDoc(doc(db, "profiles", uid));
+        if (pSnap.exists()){
+          const p = pSnap.data() || {};
+          const displayName = p.displayName || "Member";
+          const homeState = p.homeState || "";
+          const bio = p.bio || "";
+          const photoUrl = p.photoUrl || "";
+
+          nameEl.textContent = displayName;
+          homeStateEl.textContent = homeState ? `Home state: ${homeState}` : "";
+          memberUidEl.textContent = `UID: ${uid}`;
+          bioEl.textContent = bio || "No bio yet.";
+
+          if (photoUrl){
+            avatarEl.src = photoUrl;
+            avatarEl.style.display = "block";
+          } else {
+            avatarEl.style.display = "none";
+          }
+
+          profileCard.style.display = "block";
+          copyLinkBtn.style.display = "inline-block";
+        } else {
+          // No profile doc — still show posts
+          profileCard.style.display = "none";
+        }
+      }catch(e){
+        // ignore profile load failure; posts can still show
+        profileCard.style.display = "none";
+      }
+
+      // ===== Load posts by user =====
+      statusEl.textContent = "Loading posts…";
+      gridEl.innerHTML = "";
+
+      let posts = [];
+      try{
+        let snap;
+        try{
+          snap = await getDocs(query(
+            collection(db, "posts"),
+            where("userId", "==", uid),
+            orderBy("createdAt", "desc")
+          ));
+        } catch (e){
+          // fallback if index isn't available
+          snap = await getDocs(query(
+            collection(db, "posts"),
+            where("userId", "==", uid)
+          ));
+        }
+
+        snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
+      }catch(e){
+        statusEl.textContent = "❌ Error loading member posts:\n" + (e?.message || String(e));
+        return;
+      }
+
+      countEl.textContent = String(posts.length);
+
+      // ===== Stats (Option C-ish) =====
+      // total posts, posts with paid unlock, sum of listed prices
+      const total = posts.length;
+      const paidCount = posts.filter(p => !!p.hasPaid).length;
+
+      let sum = 0;
+      let pricedCount = 0;
+      for (const p of posts){
+        if (typeof p.price === "number"){
+          sum += p.price;
+          pricedCount++;
+        }
+      }
+
+      statsRow.innerHTML = "";
+      function statPill(label, value){
+        const el = document.createElement("span");
+        el.className = "pill";
+        el.textContent = `${label}: ${value}`;
+        statsRow.appendChild(el);
+      }
+
+      statPill("Total posts", total);
+      statPill("Paid unlock posts", paidCount);
+      if (pricedCount > 0) statPill("Sum of listed prices", "$" + sum.toFixed(2));
+
+      if (!posts.length){
+        statusEl.textContent = "No posts from this member yet.";
+        return;
+      }
+
+      gridEl.innerHTML = posts.map(postCardHTML).join("");
+      statusEl.textContent = `Loaded ${posts.length} post(s).`;
+    }
+
+    await load();
+  </script>
+</body>
+</html>
