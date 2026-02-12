@@ -105,6 +105,7 @@
     }
     button:hover{filter:brightness(1.08)}
     button:disabled{opacity:.55;cursor:not-allowed}
+    .small-btn{padding:8px 10px;border-radius:12px;font-size:13px}
 
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
     .card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
@@ -225,6 +226,45 @@
     .locked .kv b{color:var(--text)}
     .btn-wide{width:100%}
 
+    /* ===== Members / Profile ===== */
+    .members-card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:var(--card);
+      padding:14px;
+      margin: 12px 0 14px;
+    }
+    .members-head{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .members-title{
+      font-size:15px;
+      font-weight:900;
+      margin:0;
+    }
+    .members-sub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .members-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .profile-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    .profile-grid .full{grid-column:1 / -1}
+
     @media (max-width:900px){
       .hero-collage{height:220px}
       .collage-grid{grid-template-columns:repeat(4,1fr)}
@@ -232,6 +272,7 @@
     }
     @media (max-width:720px){
       .fields{grid-template-columns:1fr}
+      .profile-grid{grid-template-columns:1fr}
       .hero-collage{height:190px}
       .hero-text h1{font-size:26px}
       .hero-text p{font-size:13px}
@@ -239,12 +280,15 @@
   </style>
 </head>
 <body>
-<script>
-  var password = prompt("Enter password to access the site:");
-  if (password !== "fishing1988") {
-    document.body.innerHTML = "";
-  }
-</script>
+
+  <!-- NOTE: This is not real security; anyone can view source. Left as-is because you're using it. -->
+  <script>
+    var password = prompt("Enter password to access the site:");
+    if (password !== "fishing1988") {
+      document.body.innerHTML = "";
+    }
+  </script>
+
   <section class="hero-collage" aria-label="Fishing photo collage">
     <div class="collage-grid" aria-hidden="true">
       <img src="FB_IMG_1770908475493.jpg" alt="">
@@ -272,6 +316,67 @@
 
   <div class="wrap">
     <div id="status" class="status">Loading…</div>
+
+    <!-- MEMBERS / AUTH + PROFILE -->
+    <div class="members-card">
+      <div class="members-head">
+        <div>
+          <p class="members-title">Members</p>
+          <p id="memberStateText" class="members-sub">Sign in to create your profile and get your own page.</p>
+        </div>
+
+        <div class="members-actions">
+          <button id="loginBtn" class="small-btn" type="button">Sign in with Google</button>
+          <button id="logoutBtn" class="small-btn" type="button" style="display:none">Sign out</button>
+          <button id="viewMyPageBtn" class="small-btn" type="button" style="display:none">View my page</button>
+        </div>
+      </div>
+
+      <div id="profileEditor" style="display:none">
+        <div class="profile-grid">
+          <div>
+            <label for="profileDisplayName">Display name</label>
+            <input id="profileDisplayName" placeholder="e.g., Russell B." />
+          </div>
+
+          <div>
+            <label for="profileHomeState">Home state</label>
+            <select id="profileHomeState">
+              <option value="">(optional)</option>
+              <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+              <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+              <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+              <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+              <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+              <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+              <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+              <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+              <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+              <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+              <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+              <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+              <option>Wisconsin</option><option>Wyoming</option>
+            </select>
+          </div>
+
+          <div class="full">
+            <label for="profilePhotoUrl">Profile photo URL (optional)</label>
+            <input id="profilePhotoUrl" placeholder="https://..." />
+            <div class="hint">Later we can let users upload this like posts.</div>
+          </div>
+
+          <div class="full">
+            <label for="profileBio">Bio (optional)</label>
+            <textarea id="profileBio" placeholder="What do you fish for? Favorite waters? Gear?"></textarea>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button id="saveProfileBtn" type="button">Save profile</button>
+          <span id="profileSaveMsg" class="hint"></span>
+        </div>
+      </div>
+    </div>
 
     <div class="row" style="margin-top:8px">
       <span class="pill">🆓 Free: title + state + photo</span>
@@ -436,6 +541,20 @@
     const reloadBtn = document.getElementById("reloadBtn");
     const postHintEl = document.getElementById("postHint");
 
+    // Members/Profile elements
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const viewMyPageBtn = document.getElementById("viewMyPageBtn");
+    const memberStateText = document.getElementById("memberStateText");
+
+    const profileEditor = document.getElementById("profileEditor");
+    const profileDisplayName = document.getElementById("profileDisplayName");
+    const profileHomeState = document.getElementById("profileHomeState");
+    const profilePhotoUrl = document.getElementById("profilePhotoUrl");
+    const profileBio = document.getElementById("profileBio");
+    const saveProfileBtn = document.getElementById("saveProfileBtn");
+    const profileSaveMsg = document.getElementById("profileSaveMsg");
+
     window.addEventListener("unhandledrejection", (e) => {
       statusEl.textContent = "❌ Unhandled promise:\n" + (e.reason?.message || e.reason || e);
     });
@@ -462,43 +581,88 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    const authRow = document.createElement("div");
-    authRow.className = "row";
-    authRow.innerHTML = `
-      <button id="loginBtn" type="button">Sign in with Google</button>
-      <button id="logoutBtn" type="button" style="display:none">Sign out</button>
-      <span id="userInfo" class="meta"></span>
-    `;
-    statusEl.insertAdjacentElement("afterend", authRow);
-
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userInfo = document.getElementById("userInfo");
-
     let currentUser = null;
 
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-      if (user) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `Signed in as ${user.displayName || user.email || "User"}`;
-        postBtn.disabled = false;
-        postBtn.textContent = "Post catch";
-        postHintEl.textContent = "✅ You’re signed in — you can post now.";
-        postHintEl.classList.add("ok");
+    function isValidUrl(s){
+      if (!s) return false;
+      try { new URL(s); return true; } catch { return false; }
+    }
+
+    // ===== PROFILE CRUD =====
+    async function loadMyProfile(uid){
+      const ref = doc(db, "profiles", uid);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()){
+        const p = snap.data() || {};
+        profileDisplayName.value = p.displayName || "";
+        profileHomeState.value = p.homeState || "";
+        profilePhotoUrl.value = p.photoUrl || "";
+        profileBio.value = p.bio || "";
+        profileSaveMsg.textContent = "Loaded your profile.";
+        profileSaveMsg.classList.remove("ok");
       } else {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        userInfo.textContent = "Not signed in";
-        postBtn.disabled = true;
-        postBtn.textContent = "Sign in to post";
-        postHintEl.textContent = "You can browse without signing in. Sign in only if you want to post.";
-        postHintEl.classList.remove("ok");
+        profileDisplayName.value = currentUser?.displayName || "";
+        profileHomeState.value = "";
+        profilePhotoUrl.value = currentUser?.photoURL || "";
+        profileBio.value = "";
+        profileSaveMsg.textContent = "No profile yet — fill this out and tap Save profile.";
+        profileSaveMsg.classList.remove("ok");
       }
+    }
+
+    async function saveMyProfile(){
+      if (!currentUser) return;
+
+      saveProfileBtn.disabled = true;
+      profileSaveMsg.textContent = "Saving…";
+      profileSaveMsg.classList.remove("ok");
+
+      try{
+        const uid = currentUser.uid;
+        const ref = doc(db, "profiles", uid);
+        const existing = await getDoc(ref);
+
+        const payload = {
+          uid,
+          displayName: profileDisplayName.value.trim() || null,
+          homeState: profileHomeState.value.trim() || null,
+          photoUrl: profilePhotoUrl.value.trim() || null,
+          bio: profileBio.value.trim() || null,
+          createdAt: existing.exists() ? existing.data().createdAt : serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+
+        // Rules require full doc shape; merge false keeps keys exact.
+        await setDoc(ref, payload, { merge: false });
+
+        profileSaveMsg.textContent = "✅ Profile saved.";
+        profileSaveMsg.classList.add("ok");
+      } catch(e){
+        profileSaveMsg.textContent = "❌ Save failed: " + (e?.message || String(e));
+      } finally {
+        saveProfileBtn.disabled = false;
+      }
+    }
+
+    saveProfileBtn.addEventListener("click", saveMyProfile);
+
+    viewMyPageBtn.addEventListener("click", () => {
+      if (!currentUser) return;
+      // You'll add member.html next (I can provide it again if you need)
+      window.location.href = `member.html?uid=${encodeURIComponent(currentUser.uid)}`;
     });
 
+    // ===== AUTH =====
     try{
       await getRedirectResult(auth);
     }catch(err){
@@ -535,43 +699,56 @@
       }
     });
 
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
 
-    function isValidUrl(s){
-      if (!s) return false;
-      try { new URL(s); return true; } catch { return false; }
-    }
+      if (user) {
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        viewMyPageBtn.style.display = "inline-block";
+        memberStateText.textContent = `Signed in as ${user.displayName || user.email || "User"} — edit your profile below.`;
 
-    // ======= IMPORTANT: PAYWALL NOTE =======
-    // The public feed must NOT read paidLink/secretLocation directly.
-    // This page assumes paid info lives in a private doc: postSecrets/{postId}
-    // and your Firestore Rules + (eventually) Stripe verification decide who can read it.
-    //
-    // For now, this UI provides an "Unlock" button and will attempt to read postSecrets/{postId}.
-    // If your rules block it (as they should), it will show a clear "locked" message.
-    // Once you add Stripe + server verification, you'll switch unlock flow to call your server,
-    // then write an unlock record, then allow reading postSecrets.
+        profileEditor.style.display = "block";
+        await loadMyProfile(user.uid);
 
+        postBtn.disabled = false;
+        postBtn.textContent = "Post catch";
+        postHintEl.textContent = "✅ You’re signed in — you can post now.";
+        postHintEl.classList.add("ok");
+      } else {
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        viewMyPageBtn.style.display = "none";
+        memberStateText.textContent = "Sign in to create your profile and get your own page.";
+
+        profileEditor.style.display = "none";
+        profileSaveMsg.textContent = "";
+        profileSaveMsg.classList.remove("ok");
+
+        postBtn.disabled = true;
+        postBtn.textContent = "Sign in to post";
+        postHintEl.textContent = "You can browse without signing in. Sign in only if you want to post.";
+        postHintEl.classList.remove("ok");
+      }
+    });
+
+    // ===== FEED / POSTS =====
     function cardHTML(p){
       const title = p.title ?? "Untitled catch";
       const state = p.state ?? "Unknown";
       const priceRaw = p.price;
       const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
       const imageUrl = p.imageUrl ?? "";
+      const hasPaid = !!p.hasPaid;
 
-      const hasPaid = !!p.hasPaid; // indicates this post has paid content stored privately
+      // Optional: show author name if available
+      const author = p.userName || "Member";
 
       return `
         <div class="card" data-postid="${escapeHtml(p.id)}">
           ${imageUrl ? `<img class="post-img" src="${escapeHtml(imageUrl)}" alt="Catch photo" loading="lazy" />` : ""}
           <p class="title">${escapeHtml(title)}</p>
+          <p class="meta">By: <b>${escapeHtml(author)}</b></p>
           <p class="meta">State: <b>${escapeHtml(state)}</b></p>
           <p class="meta"><span class="price">$${escapeHtml(price)}</span></p>
 
@@ -631,6 +808,7 @@
             : query(base, orderBy("createdAt", "desc"));
           snap = await getDocs(q);
         }catch(e){
+          // fallback without orderBy if index/rules cause trouble
           snap = await getDocs(collection(db, "posts"));
         }
 
@@ -651,9 +829,7 @@
           return;
         }
 
-        let html = "";
-        for (const p of posts) html += cardHTML(p);
-        gridEl.innerHTML = html;
+        gridEl.innerHTML = posts.map(cardHTML).join("");
 
         statusEl.textContent = chosenState
           ? `Loaded ${posts.length} post(s) for ${chosenState}.`
@@ -681,11 +857,6 @@
       if (btn) btn.style.display = "none";
     }
 
-    // Placeholder unlock: tries to read postSecrets/{postId}
-    // In the “real” Stripe version, you should:
-    // 1) create Stripe checkout session on server
-    // 2) after payment webhook, write users/{uid}/unlocks/{postId}
-    // 3) rules allow reading postSecrets only if unlock exists
     async function unlockPaid(postId){
       statusEl.textContent = "Unlocking…";
 
@@ -716,7 +887,6 @@
       }
     }
 
-    // Event delegation for unlock buttons
     gridEl.addEventListener("click", (e) => {
       const btn = e.target.closest(".unlockBtn");
       if (!btn) return;
@@ -768,7 +938,6 @@
 
         statusEl.textContent = "Posting…";
 
-        // PUBLIC: only title + state + photo (+ price)
         const postRef = await addDoc(collection(db, "posts"), {
           title,
           state,
@@ -785,7 +954,6 @@
           createdAt: serverTimestamp()
         });
 
-        // PRIVATE: paid link + secret location
         await setDoc(doc(db, "postSecrets", postRef.id), {
           postId: postRef.id,
           ownerId: currentUser.uid,
