@@ -198,6 +198,33 @@
     }
     .info-box li:last-child{margin-bottom:0}
 
+    /* Locked/paid UI */
+    .locked{
+      border:1px dashed rgba(201,194,170,.35);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(11,18,13,.35);
+      margin-top:10px;
+    }
+    .locked .label{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .locked .paidContent{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid rgba(201,194,170,.18);
+    }
+    .locked .kv{
+      margin:0 0 8px 0;
+      font-size:13px;
+      color:var(--muted);
+      word-break:break-word;
+    }
+    .locked .kv b{color:var(--text)}
+    .btn-wide{width:100%}
+
     @media (max-width:900px){
       .hero-collage{height:220px}
       .collage-grid{grid-template-columns:repeat(4,1fr)}
@@ -227,11 +254,11 @@
     <div class="hero-overlay"></div>
     <div class="hero-text">
       <h1>BEST FISHING SECRETS</h1>
-      <p>See the catch. Unlock the details.</p>
+      <p>See the catch. Unlock the link + location.</p>
       <div class="hero-badges">
-        <span class="hero-badge"> 🎣 Browse free</span>
+        <span class="hero-badge"> 🎣 Photo preview is free</span>
         <span class="hero-badge">🔏 Sign-in to post</span>
-        <span class="hero-badge">💳🔓Secrets stored privately</span>
+        <span class="hero-badge">💳🔓 Link + location are paid</span>
       </div>
     </div>
   </section>
@@ -242,9 +269,9 @@
     <div id="status" class="status">Loading…</div>
 
     <div class="row" style="margin-top:8px">
-      <span class="pill">🎣 Anyone can browse posts</span>
+      <span class="pill">🆓 Free: title + state + photo</span>
+      <span class="pill">💳 Paid unlock: full link + secret location</span>
       <span class="pill">🔏 Sign-in required to post</span>
-      <span class="pill">💳🔓 Secret location stored separately</span>
     </div>
 
     <div class="form">
@@ -281,12 +308,11 @@
       <h2>Post a Catch</h2>
 
       <div class="info-box">
-        <h3>How posting works (what buyers get)</h3>
+        <h3>What buyers get</h3>
         <ul>
-          <li><strong>Preview link (Free):</strong> A teaser photo or short clip anyone can view (no spot giveaway).</li>
-          <li><strong>Full link (Paid):</strong> The real content buyers are paying for — full video, exact location details, access notes, etc.</li>
-          <li><strong>Tip:</strong> If you upload a photo but leave Preview/Full link blank, we’ll use the uploaded photo as the link automatically.</li>
-          <li><strong>Secret location:</strong> Saved privately (not shown on the public feed). Only share what you’re comfortable with.</li>
+          <li><strong>Free preview:</strong> Title + state + photo only.</li>
+          <li><strong>Paid unlock:</strong> Full link + secret location.</li>
+          <li><strong>Important:</strong> Full link and secret location are saved in a private collection (not shown on the public feed).</li>
         </ul>
       </div>
 
@@ -321,26 +347,22 @@
           <input id="price" type="number" step="0.01" min="0" placeholder="9.99" />
         </div>
 
-        <div>
-          <label for="previewUrl">Preview link (optional)</label>
-          <input id="previewUrl" placeholder="https://..." />
+        <div class="full">
+          <label for="paidLink">Full link (PAID — unlocked after purchase)</label>
+          <input id="paidLink" placeholder="https://..." />
+          <div class="hint">This will NOT be shown publicly. Buyers unlock it.</div>
         </div>
 
         <div class="full">
-          <label for="fullUrl">Full link (optional)</label>
-          <input id="fullUrl" placeholder="https://..." />
-        </div>
-
-        <div class="full">
-          <label for="photo">Photo (uploaded to Cloudinary)</label>
+          <label for="photo">Photo (uploaded to Cloudinary) — FREE teaser</label>
           <input id="photo" type="file" accept="image/*" />
-          <div class="img-note">Optional, but recommended. Large files may take longer on mobile.</div>
+          <div class="img-note">Recommended. Large files may take longer on mobile.</div>
         </div>
 
         <div class="full">
-          <label for="secretLocation">Secret location (stored privately)</label>
+          <label for="secretLocation">Secret location (PAID — stored privately)</label>
           <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
-          <div class="hint">This is stored in a private collection and not readable from the public feed.</div>
+          <div class="hint">Saved privately. Only buyers should see it after payment verification.</div>
           <div class="hint" style="margin-top:6px;">
             Locked content must include a secondary photo or video showing a recognizable structure,
             landmark, or environmental feature near the fishing location.
@@ -375,6 +397,7 @@
       getDocs,
       addDoc,
       setDoc,
+      getDoc,
       doc,
       serverTimestamp,
       query,
@@ -399,8 +422,7 @@
     const titleEl = document.getElementById("title");
     const stateEl = document.getElementById("state");
     const priceEl = document.getElementById("price");
-    const previewUrlEl = document.getElementById("previewUrl");
-    const fullUrlEl = document.getElementById("fullUrl");
+    const paidLinkEl = document.getElementById("paidLink");
     const secretLocationEl = document.getElementById("secretLocation");
     const photoEl = document.getElementById("photo");
     const honestyCheckEl = document.getElementById("honestyCheck");
@@ -518,28 +540,55 @@
     }
 
     function isValidUrl(s){
-      if (!s) return true;
+      if (!s) return false;
       try { new URL(s); return true; } catch { return false; }
     }
+
+    // ======= IMPORTANT: PAYWALL NOTE =======
+    // The public feed must NOT read paidLink/secretLocation directly.
+    // This page assumes paid info lives in a private doc: postSecrets/{postId}
+    // and your Firestore Rules + (eventually) Stripe verification decide who can read it.
+    //
+    // For now, this UI provides an "Unlock" button and will attempt to read postSecrets/{postId}.
+    // If your rules block it (as they should), it will show a clear "locked" message.
+    // Once you add Stripe + server verification, you'll switch unlock flow to call your server,
+    // then write an unlock record, then allow reading postSecrets.
 
     function cardHTML(p){
       const title = p.title ?? "Untitled catch";
       const state = p.state ?? "Unknown";
       const priceRaw = p.price;
       const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
+      const imageUrl = p.imageUrl ?? "";
 
-      const imageUrl = p.imageUrl ?? p.previewUrl ?? "";
-      const previewUrl = p.previewUrl ?? "";
-      const fullUrl = p.fullUrl ?? "";
+      const hasPaid = !!p.hasPaid; // indicates this post has paid content stored privately
 
       return `
-        <div class="card">
+        <div class="card" data-postid="${escapeHtml(p.id)}">
           ${imageUrl ? `<img class="post-img" src="${escapeHtml(imageUrl)}" alt="Catch photo" loading="lazy" />` : ""}
           <p class="title">${escapeHtml(title)}</p>
           <p class="meta">State: <b>${escapeHtml(state)}</b></p>
           <p class="meta"><span class="price">$${escapeHtml(price)}</span></p>
-          ${previewUrl ? `<p class="meta"><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">Preview link</a></p>` : ""}
-          ${fullUrl ? `<p class="meta"><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener">Full link</a></p>` : ""}
+
+          ${hasPaid ? `
+            <div class="locked">
+              <div class="label">Paid content</div>
+              <button class="btn-wide unlockBtn" type="button" data-postid="${escapeHtml(p.id)}">
+                Unlock link + location
+              </button>
+
+              <div class="paidContent" style="display:none">
+                <p class="kv"><b>Full link:</b> <a class="paidLink" href="#" target="_blank" rel="noopener">Open</a></p>
+                <p class="kv"><b>Secret location:</b> <span class="secretLoc"></span></p>
+              </div>
+
+              <div class="hint" style="margin-top:8px;">
+                If you can’t unlock yet, payments/verification may not be enabled on this build.
+              </div>
+            </div>
+          ` : `
+            <div class="hint">No paid link/location attached to this post.</div>
+          `}
         </div>
       `;
     }
@@ -588,7 +637,7 @@
         }
 
         let posts = [];
-        snap.forEach(d => posts.push(d.data()));
+        snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
 
         if (chosenState) posts = posts.filter(p => (p.state || "").trim() === chosenState);
 
@@ -610,6 +659,67 @@
       }
     }
 
+    function showPaidInCard(postId, paidLink, secretLocation){
+      const card = gridEl.querySelector(`.card[data-postid="${CSS.escape(postId)}"]`);
+      if (!card) return;
+
+      const paid = card.querySelector(".paidContent");
+      const a = card.querySelector(".paidLink");
+      const loc = card.querySelector(".secretLoc");
+      const btn = card.querySelector(".unlockBtn");
+
+      a.href = paidLink;
+      a.textContent = paidLink;
+      loc.textContent = secretLocation;
+
+      paid.style.display = "block";
+      if (btn) btn.style.display = "none";
+    }
+
+    // Placeholder unlock: tries to read postSecrets/{postId}
+    // In the “real” Stripe version, you should:
+    // 1) create Stripe checkout session on server
+    // 2) after payment webhook, write users/{uid}/unlocks/{postId}
+    // 3) rules allow reading postSecrets only if unlock exists
+    async function unlockPaid(postId){
+      statusEl.textContent = "Unlocking…";
+
+      try{
+        const secretRef = doc(db, "postSecrets", postId);
+        const snap = await getDoc(secretRef);
+
+        if (!snap.exists()){
+          statusEl.textContent = "❌ Locked content not found for this post.";
+          return;
+        }
+
+        const data = snap.data() || {};
+        const paidLink = (data.paidLink || "").trim();
+        const secretLocation = (data.secretLocation || "").trim();
+
+        if (!paidLink || !secretLocation){
+          statusEl.textContent = "❌ Locked content is incomplete (missing link or location).";
+          return;
+        }
+
+        showPaidInCard(postId, paidLink, secretLocation);
+        statusEl.textContent = "✅ Unlocked (demo). If this should be paid, add Stripe verification + rules gating.";
+      }catch(err){
+        statusEl.textContent =
+          "🔒 Still locked.\n\nThis is expected until you enable payment verification + Firestore Rules.\n\nDetails:\n" +
+          (err?.message || String(err));
+      }
+    }
+
+    // Event delegation for unlock buttons
+    gridEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".unlockBtn");
+      if (!btn) return;
+      const postId = btn.getAttribute("data-postid");
+      if (!postId) return;
+      unlockPaid(postId);
+    });
+
     async function postCatch(){
       if (!currentUser) {
         statusEl.textContent = "❌ Please sign in first to post.";
@@ -619,16 +729,14 @@
       const title = titleEl.value.trim();
       const state = stateEl.value.trim();
       const priceStr = priceEl.value.trim();
-
-      const previewLinkTyped = previewUrlEl.value.trim();
-      const fullLinkTyped = fullUrlEl.value.trim();
-
+      const paidLink = paidLinkEl.value.trim();
       const secretLocation = secretLocationEl.value.trim();
 
       if (!title) { statusEl.textContent = "❌ Please enter a title."; return; }
       if (!state) { statusEl.textContent = "❌ Please select a state."; return; }
       if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
-      if (!isValidUrl(previewLinkTyped) || !isValidUrl(fullLinkTyped)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
+      if (!isValidUrl(paidLink)) { statusEl.textContent = "❌ Please enter a valid Full link (https://...)."; return; }
+      if (!secretLocation) { statusEl.textContent = "❌ Please enter a secret location (paid content)."; return; }
 
       if (!honestyCheckEl.checked) {
         statusEl.textContent = "❌ You must confirm the honesty agreement before posting.";
@@ -648,13 +756,14 @@
           imageUrl = uploaded.secure_url || uploaded.url || null;
           imagePublicId = uploaded.public_id || null;
           if (!imageUrl) throw new Error("Upload succeeded but no image URL was returned.");
+        } else {
+          statusEl.textContent = "❌ Please upload a photo (this is the free teaser).";
+          return;
         }
 
         statusEl.textContent = "Posting…";
 
-        const previewUrl = previewLinkTyped || imageUrl || null;
-        const fullUrl = fullLinkTyped || imageUrl || null;
-
+        // PUBLIC: only title + state + photo (+ price)
         const postRef = await addDoc(collection(db, "posts"), {
           title,
           state,
@@ -662,10 +771,8 @@
 
           imageUrl: imageUrl,
           imagePublicId: imagePublicId,
-          previewUrl: previewUrl,
-          fullUrl: fullUrl,
 
-          hasSecret: !!secretLocation,
+          hasPaid: true,
 
           userId: currentUser.uid,
           userName: currentUser.displayName || null,
@@ -673,20 +780,19 @@
           createdAt: serverTimestamp()
         });
 
-        if (secretLocation) {
-          await setDoc(doc(db, "postSecrets", postRef.id), {
-            postId: postRef.id,
-            ownerId: currentUser.uid,
-            secretLocation: secretLocation,
-            createdAt: serverTimestamp()
-          });
-        }
+        // PRIVATE: paid link + secret location
+        await setDoc(doc(db, "postSecrets", postRef.id), {
+          postId: postRef.id,
+          ownerId: currentUser.uid,
+          paidLink: paidLink,
+          secretLocation: secretLocation,
+          createdAt: serverTimestamp()
+        });
 
         titleEl.value = "";
         stateEl.value = "";
         priceEl.value = "";
-        previewUrlEl.value = "";
-        fullUrlEl.value = "";
+        paidLinkEl.value = "";
         secretLocationEl.value = "";
         photoEl.value = "";
         honestyCheckEl.checked = false;
