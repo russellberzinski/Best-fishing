@@ -1,4 +1,4 @@
-o <!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -341,6 +341,20 @@ o <!doctype html>
           <label for="secretLocation">Secret location (stored privately)</label>
           <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
           <div class="hint">This is stored in a private collection and not readable from the public feed.</div>
+          <div class="hint" style="margin-top:6px;">
+            Locked content must include a secondary photo or video showing a recognizable structure,
+            landmark, or environmental feature near the fishing location.
+          </div>
+        </div>
+
+        <div class="full" style="margin-top:6px;">
+          <label style="display:flex;gap:8px;align-items:flex-start;">
+            <input type="checkbox" id="honestyCheck" />
+            <span style="font-size:13px;color:var(--muted);">
+              I confirm this post contains truthful location information and includes
+              a recognizable structure or landmark in the locked proof photo or video.
+            </span>
+          </label>
         </div>
       </div>
 
@@ -389,6 +403,7 @@ o <!doctype html>
     const fullUrlEl = document.getElementById("fullUrl");
     const secretLocationEl = document.getElementById("secretLocation");
     const photoEl = document.getElementById("photo");
+    const honestyCheckEl = document.getElementById("honestyCheck");
 
     const postBtn = document.getElementById("postBtn");
     const reloadBtn = document.getElementById("reloadBtn");
@@ -615,6 +630,11 @@ o <!doctype html>
       if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
       if (!isValidUrl(previewLinkTyped) || !isValidUrl(fullLinkTyped)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
 
+      if (!honestyCheckEl.checked) {
+        statusEl.textContent = "❌ You must confirm the honesty agreement before posting.";
+        return;
+      }
+
       postBtn.disabled = true;
 
       let imageUrl = null;
@@ -669,6 +689,7 @@ o <!doctype html>
         fullUrlEl.value = "";
         secretLocationEl.value = "";
         photoEl.value = "";
+        honestyCheckEl.checked = false;
 
         statusEl.textContent = "✅ Posted!";
         await loadPosts();
