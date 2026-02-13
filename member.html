@@ -7,6 +7,7 @@
   <style>
     :root{
       --bg:#0b120d; --card:#121b12; --text:#f3f1e7; --muted:#c9c2aa; --line:#2c3a2b; --accent:#7aa35a; --accent2:#b08a5a;
+      --danger:#ff6b6b;
     }
     *{box-sizing:border-box}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:var(--text)}
@@ -33,11 +34,23 @@
       font:inherit;
     }
     .btn:hover{filter:brightness(1.08)}
+    .btn[disabled]{opacity:.55;cursor:not-allowed}
     .kv{margin:0 0 8px 0;font-size:13px;color:var(--muted);word-break:break-word}
     .kv b{color:var(--text)}
     .hr{height:1px;background:rgba(201,194,170,.18);border:0;margin:12px 0}
+    .small{font-size:12px;color:var(--muted)}
+    .danger{color:var(--danger)}
+    input[type="file"]{
+      border:1px dashed rgba(201,194,170,.28);
+      padding:8px;
+      border-radius:12px;
+      color:var(--muted);
+      max-width: 320px;
+    }
+    progress{width:220px;height:12px}
     @media (max-width:720px){
       .avatar{width:64px;height:64px}
+      progress{width:160px}
     }
   </style>
 </head>
@@ -65,7 +78,30 @@
           </div>
         </div>
 
-        <button id="copyLinkBtn" class="btn" type="button" style="display:none">Copy profile link</button>
+        <div class="row" style="gap:10px; justify-content:flex-end">
+          <button id="copyLinkBtn" class="btn" type="button" style="display:none">Copy profile link</button>
+        </div>
+      </div>
+
+      <!-- NEW: owner-only profile photo controls -->
+      <div id="photoControls" class="card" style="margin:12px 0 0 0; display:none; padding:12px">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <b>Profile photo</b>
+            <div class="small">Only you can change your photo.</div>
+          </div>
+          <div class="small" id="photoOwnerHint"></div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <input id="photoFile" type="file" accept="image/*" />
+          <button id="uploadPhotoBtn" class="btn" type="button" disabled>Upload / Replace</button>
+          <progress id="uploadProg" value="0" max="100" style="display:none"></progress>
+        </div>
+        <div id="uploadMsg" class="small" style="margin-top:8px"></div>
+        <div class="small" style="margin-top:8px">
+          Tip: pick a clear face photo or logo. Max ~5MB recommended.
+        </div>
       </div>
 
       <hr class="hr" />
@@ -89,8 +125,16 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
-      getFirestore, doc, getDoc, collection, getDocs, query, where, orderBy
+      getFirestore, doc, getDoc, collection, getDocs, query, where, orderBy, setDoc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    import {
+      getStorage, ref, uploadBytesResumable, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
@@ -104,6 +148,8 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
 
     const statusEl = document.getElementById("status");
     const profileCard = document.getElementById("profileCard");
@@ -116,8 +162,15 @@
 
     const gridEl = document.getElementById("grid");
     const countEl = document.getElementById("count");
-
     const copyLinkBtn = document.getElementById("copyLinkBtn");
+
+    // NEW: photo controls
+    const photoControls = document.getElementById("photoControls");
+    const photoOwnerHint = document.getElementById("photoOwnerHint");
+    const photoFile = document.getElementById("photoFile");
+    const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
+    const uploadProg = document.getElementById("uploadProg");
+    const uploadMsg = document.getElementById("uploadMsg");
 
     function esc(s){
       return String(s ?? "")
@@ -165,12 +218,127 @@
         copyLinkBtn.textContent = "Copied!";
         setTimeout(() => (copyLinkBtn.textContent = "Copy profile link"), 1200);
       }catch{
-        // fallback: show prompt
         prompt("Copy this link:", location.href);
       }
     }
-
     copyLinkBtn.addEventListener("click", copyProfileLink);
+
+    // Track logged in user (so only owner can upload)
+    let currentUser = null;
+    let isOwner = false;
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      isOwner = !!user && user.uid === uid;
+      renderOwnerControls();
+    });
+
+    function renderOwnerControls(){
+      if (isOwner){
+        photoControls.style.display = "block";
+        photoOwnerHint.textContent = "You are viewing your profile.";
+      } else {
+        photoControls.style.display = "none";
+      }
+    }
+
+    function setUploadMsg(msg, isError=false){
+      uploadMsg.textContent = msg || "";
+      uploadMsg.className = "small" + (isError ? " danger" : "");
+    }
+
+    photoFile.addEventListener("change", () => {
+      const f = photoFile.files?.[0];
+      uploadPhotoBtn.disabled = !f;
+      if (!f) return;
+
+      // quick local preview before upload
+      try{
+        avatarEl.src = URL.createObjectURL(f);
+        avatarEl.style.display = "block";
+      }catch{}
+      setUploadMsg("");
+    });
+
+    uploadPhotoBtn.addEventListener("click", async () => {
+      if (!isOwner){
+        setUploadMsg("You must be logged in as this user to change the photo.", true);
+        return;
+      }
+      const f = photoFile.files?.[0];
+      if (!f){
+        setUploadMsg("Pick an image file first.", true);
+        return;
+      }
+
+      // basic validations
+      if (!f.type.startsWith("image/")){
+        setUploadMsg("That file isn't an image.", true);
+        return;
+      }
+      const maxBytes = 5 * 1024 * 1024; // 5MB
+      if (f.size > maxBytes){
+        setUploadMsg("Image is too large. Try a smaller file (under ~5MB).", true);
+        return;
+      }
+
+      uploadPhotoBtn.disabled = true;
+      uploadProg.style.display = "inline-block";
+      uploadProg.value = 0;
+      setUploadMsg("Uploading…");
+
+      try{
+        // Always overwrite same path = replace photo
+        const path = `profilePics/${uid}.jpg`;
+        const storageRef = ref(storage, path);
+
+        const task = uploadBytesResumable(storageRef, f, {
+          contentType: f.type,
+          cacheControl: "public, max-age=3600"
+        });
+
+        await new Promise((resolve, reject) => {
+          task.on("state_changed",
+            (snap) => {
+              const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+              uploadProg.value = pct;
+              setUploadMsg(`Uploading… ${pct}%`);
+            },
+            (err) => reject(err),
+            () => resolve()
+          );
+        });
+
+        const url = await getDownloadURL(task.snapshot.ref);
+
+        // Ensure profile doc exists and update photoUrl
+        const pRef = doc(db, "profiles", uid);
+        const pSnap = await getDoc(pRef);
+
+        if (!pSnap.exists()){
+          await setDoc(pRef, {
+            displayName: currentUser.displayName || "Member",
+            photoUrl: url,
+            updatedAt: new Date()
+          }, { merge: true });
+        } else {
+          await updateDoc(pRef, {
+            photoUrl: url,
+            updatedAt: new Date()
+          });
+        }
+
+        avatarEl.src = url;
+        avatarEl.style.display = "block";
+        setUploadMsg("✅ Profile photo updated.");
+      }catch(e){
+        setUploadMsg("❌ Upload failed: " + (e?.message || String(e)), true);
+      }finally{
+        uploadPhotoBtn.disabled = false;
+        uploadProg.style.display = "none";
+        // keep file selected in case they retry
+      }
+    });
 
     async function load(){
       statusEl.textContent = "Loading profile…";
@@ -179,100 +347,4 @@
       try{
         const pSnap = await getDoc(doc(db, "profiles", uid));
         if (pSnap.exists()){
-          const p = pSnap.data() || {};
-          const displayName = p.displayName || "Member";
-          const homeState = p.homeState || "";
-          const bio = p.bio || "";
-          const photoUrl = p.photoUrl || "";
-
-          nameEl.textContent = displayName;
-          homeStateEl.textContent = homeState ? `Home state: ${homeState}` : "";
-          memberUidEl.textContent = `UID: ${uid}`;
-          bioEl.textContent = bio || "No bio yet.";
-
-          if (photoUrl){
-            avatarEl.src = photoUrl;
-            avatarEl.style.display = "block";
-          } else {
-            avatarEl.style.display = "none";
-          }
-
-          profileCard.style.display = "block";
-          copyLinkBtn.style.display = "inline-block";
-        } else {
-          // No profile doc — still show posts
-          profileCard.style.display = "none";
-        }
-      }catch(e){
-        // ignore profile load failure; posts can still show
-        profileCard.style.display = "none";
-      }
-
-      // ===== Load posts by user =====
-      statusEl.textContent = "Loading posts…";
-      gridEl.innerHTML = "";
-
-      let posts = [];
-      try{
-        let snap;
-        try{
-          snap = await getDocs(query(
-            collection(db, "posts"),
-            where("userId", "==", uid),
-            orderBy("createdAt", "desc")
-          ));
-        } catch (e){
-          // fallback if index isn't available
-          snap = await getDocs(query(
-            collection(db, "posts"),
-            where("userId", "==", uid)
-          ));
-        }
-
-        snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
-      }catch(e){
-        statusEl.textContent = "❌ Error loading member posts:\n" + (e?.message || String(e));
-        return;
-      }
-
-      countEl.textContent = String(posts.length);
-
-      // ===== Stats (Option C-ish) =====
-      // total posts, posts with paid unlock, sum of listed prices
-      const total = posts.length;
-      const paidCount = posts.filter(p => !!p.hasPaid).length;
-
-      let sum = 0;
-      let pricedCount = 0;
-      for (const p of posts){
-        if (typeof p.price === "number"){
-          sum += p.price;
-          pricedCount++;
-        }
-      }
-
-      statsRow.innerHTML = "";
-      function statPill(label, value){
-        const el = document.createElement("span");
-        el.className = "pill";
-        el.textContent = `${label}: ${value}`;
-        statsRow.appendChild(el);
-      }
-
-      statPill("Total posts", total);
-      statPill("Paid unlock posts", paidCount);
-      if (pricedCount > 0) statPill("Sum of listed prices", "$" + sum.toFixed(2));
-
-      if (!posts.length){
-        statusEl.textContent = "No posts from this member yet.";
-        return;
-      }
-
-      gridEl.innerHTML = posts.map(postCardHTML).join("");
-      statusEl.textContent = `Loaded ${posts.length} post(s).`;
-    }
-
-    await load();
-  </script>
-</body>
-</html>
+          const p = pSnap.data() ||
