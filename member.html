@@ -47,8 +47,8 @@
     }
     textarea{
       width:100%;
-      max-width: 640px;
-      min-height: 90px;
+      max-width: 720px;
+      min-height: 92px;
       border:1px solid rgba(201,194,170,.22);
       border-radius:12px;
       padding:10px 12px;
@@ -77,7 +77,7 @@
   </header>
 
   <div class="wrap">
-    <div id="status" class="card">Loading… (member v4 + save-profile)</div>
+    <div id="status" class="card">Loading… (member v3 + cloudinary save)</div>
 
     <div id="profileCard" class="card" style="display:none">
       <div class="row" style="justify-content:space-between">
@@ -96,31 +96,31 @@
       </div>
 
       <!-- Owner-only edit controls -->
-      <div id="photoControls" class="card" style="margin:12px 0 0 0; display:none; padding:12px">
+      <div id="editControls" class="card" style="margin:12px 0 0 0; display:none; padding:12px">
         <div class="row" style="justify-content:space-between">
           <div>
             <b>Edit profile</b>
             <div class="small">Only you can change your photo and bio.</div>
           </div>
-          <div class="small" id="photoOwnerHint"></div>
+          <div class="small" id="ownerHint"></div>
         </div>
 
         <div class="row" style="margin-top:10px">
           <input id="photoFile" type="file" accept="image/*" />
-          <button id="uploadPhotoBtn" class="btn" type="button" disabled>Upload / Replace Photo</button>
-          <progress id="uploadProg" value="0" max="100" style="display:none"></progress>
+          <button id="saveProfileBtn" class="btn" type="button" disabled>Save Profile</button>
+          <progress id="saveProg" value="0" max="100" style="display:none"></progress>
         </div>
 
-        <div style="margin-top:12px">
+        <div style="margin-top:10px">
           <div class="small" style="margin:0 0 6px 0"><b>Bio</b></div>
           <textarea id="bioInput" placeholder="Tell people who you are…"></textarea>
-          <div class="row" style="margin-top:10px">
-            <button id="saveProfileBtn" class="btn" type="button" disabled>Save Profile</button>
-            <div id="profileSaveMsg" class="small"></div>
-          </div>
         </div>
 
-        <div id="uploadMsg" class="small" style="margin-top:10px"></div>
+        <div id="saveMsg" class="small" style="margin-top:10px"></div>
+
+        <div class="small" style="margin-top:8px">
+          Tip: choose a photo and/or update your bio, then tap <b>Save Profile</b>.
+        </div>
       </div>
 
       <hr class="hr" />
@@ -163,13 +163,27 @@
       setDoc, updateDoc, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    /******************************************************************
+     * Cloudinary (UNSIGNED upload)
+     *
+     * Put your real values here (these are NOT secrets):
+     *  - CLOUDINARY_CLOUD_NAME: your Cloudinary cloud name
+     *  - CLOUDINARY_UPLOAD_PRESET: your unsigned upload preset name
+     *
+     * In Cloudinary, lock the preset down:
+     *  - allowed formats: jpg/png/webp
+     *  - max file size: 5MB (or whatever)
+     *  - optional folder restriction
+     ******************************************************************/
+    const CLOUDINARY_CLOUD_NAME = "REPLACE_ME";
+    const CLOUDINARY_UPLOAD_PRESET = "REPLACE_ME";
+    const CLOUDINARY_FOLDER = "profilePics"; // optional; "" to skip folder
 
     const firebaseConfig = {
       apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
       authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
       projectId: "bestfishingsecrets-932cf",
-      storageBucket: "bestfishingsecrets-932cf.firebasestorage.app",
       messagingSenderId: "387299114354",
       appId: "1:387299114354:web:cbadda074f9dd7083ef1eb",
       measurementId: "G-Z8L28MXNEG"
@@ -178,7 +192,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const storage = getStorage(app);
 
     const statusEl = document.getElementById("status");
     const profileCard = document.getElementById("profileCard");
@@ -189,16 +202,13 @@
     const bioEl = document.getElementById("bio");
     const copyLinkBtn = document.getElementById("copyLinkBtn");
 
-    const photoControls = document.getElementById("photoControls");
-    const photoOwnerHint = document.getElementById("photoOwnerHint");
+    const editControls = document.getElementById("editControls");
+    const ownerHint = document.getElementById("ownerHint");
     const photoFile = document.getElementById("photoFile");
-    const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
-    const uploadProg = document.getElementById("uploadProg");
-    const uploadMsg = document.getElementById("uploadMsg");
-
     const bioInput = document.getElementById("bioInput");
     const saveProfileBtn = document.getElementById("saveProfileBtn");
-    const profileSaveMsg = document.getElementById("profileSaveMsg");
+    const saveProg = document.getElementById("saveProg");
+    const saveMsg = document.getElementById("saveMsg");
 
     const gridEl = document.getElementById("grid");
     const countEl = document.getElementById("count");
@@ -208,20 +218,13 @@
         .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
         .replaceAll('"',"&quot;").replaceAll("'","&#039;");
     }
-
     function cacheBust(url){
       if (!url) return url;
       return url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
     }
-
-    function setUploadMsg(msg, isError=false){
-      uploadMsg.textContent = msg || "";
-      uploadMsg.className = "small" + (isError ? " danger" : "");
-    }
-
     function setSaveMsg(msg, isError=false){
-      profileSaveMsg.textContent = msg || "";
-      profileSaveMsg.className = "small" + (isError ? " danger" : "");
+      saveMsg.textContent = msg || "";
+      saveMsg.className = "small" + (isError ? " danger" : "");
     }
 
     function postCardHTML(p){
@@ -264,29 +267,25 @@
     let currentUser = null;
     let isOwner = false;
 
-    // Track loaded profile (so owner textarea pre-fills correctly)
+    // state for save enabling
     let loadedProfile = null;
     let lastSavedBio = "";
     let selectedFile = null;
 
     function renderOwnerControls(){
       if (isOwner){
-        photoControls.style.display = "block";
-        photoOwnerHint.textContent = "You are viewing your profile.";
+        editControls.style.display = "block";
+        ownerHint.textContent = "You are viewing your profile.";
       } else {
-        photoControls.style.display = "none";
+        editControls.style.display = "none";
       }
     }
 
-    function refreshSaveButtonState(){
-      if (!isOwner){
-        saveProfileBtn.disabled = true;
-        return;
-      }
+    function refreshSaveBtn(){
+      if (!isOwner) { saveProfileBtn.disabled = true; return; }
       const bioNow = (bioInput.value || "").trim();
       const bioChanged = bioNow !== (lastSavedBio || "");
       const hasFile = !!selectedFile;
-      // Enable if either bio changed OR a new file is selected
       saveProfileBtn.disabled = !(bioChanged || hasFile);
     }
 
@@ -295,142 +294,95 @@
       isOwner = !!user && user.uid === uid;
       renderOwnerControls();
 
-      // If profile already loaded, hydrate owner textarea
       if (isOwner && loadedProfile){
         const b = (loadedProfile.bio && String(loadedProfile.bio).trim()) ? String(loadedProfile.bio) : "";
         bioInput.value = b;
         lastSavedBio = b.trim();
-        refreshSaveButtonState();
+        refreshSaveBtn();
       }
     });
 
-    // Enable upload button once a file is chosen
+    // file pick: preview + enable save
     photoFile.addEventListener("change", () => {
-      const f = photoFile.files?.[0];
-      uploadPhotoBtn.disabled = !f;
-      selectedFile = f || null;
+      const f = photoFile.files?.[0] || null;
+      selectedFile = f;
 
-      if (!f){
-        refreshSaveButtonState();
-        return;
+      if (f){
+        try{
+          avatarEl.src = URL.createObjectURL(f);
+          avatarEl.style.display = "block";
+        }catch{}
+        setSaveMsg("");
       }
-
-      // preview
-      try{
-        avatarEl.src = URL.createObjectURL(f);
-        avatarEl.style.display = "block";
-      }catch{}
-      setUploadMsg("");
-      setSaveMsg("");
-      refreshSaveButtonState();
+      refreshSaveBtn();
     });
 
-    // Bio edits enable Save Profile
+    // bio change
     bioInput.addEventListener("input", () => {
       setSaveMsg("");
-      refreshSaveButtonState();
+      refreshSaveBtn();
     });
 
-    async function uploadProfilePhoto(uid, file){
+    async function uploadToCloudinary(file){
       if (!file) return null;
       if (!file.type.startsWith("image/")) throw new Error("That file isn't an image.");
       const maxBytes = 5 * 1024 * 1024;
       if (file.size > maxBytes) throw new Error("Image is too large. Try under ~5MB.");
 
-      uploadProg.style.display = "inline-block";
-      uploadProg.value = 0;
+      if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === "REPLACE_ME") {
+        throw new Error("Cloudinary cloud name not set (CLOUDINARY_CLOUD_NAME).");
+      }
+      if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET === "REPLACE_ME") {
+        throw new Error("Cloudinary upload preset not set (CLOUDINARY_UPLOAD_PRESET).");
+      }
 
-      // Overwrite same path, but we cache-bust when displaying
-      const path = `profilePics/${uid}.jpg`;
-      const storageRef = ref(storage, path);
+      const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(CLOUDINARY_CLOUD_NAME)}/image/upload`;
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      if (CLOUDINARY_FOLDER) fd.append("folder", CLOUDINARY_FOLDER);
+      fd.append("tags", `profile,uid_${uid}`);
 
-      const task = uploadBytesResumable(storageRef, file, {
-        contentType: file.type,
-        cacheControl: "public, max-age=3600"
-      });
+      // simple progress indicator (fetch doesn't expose upload progress)
+      saveProg.style.display = "inline-block";
+      saveProg.value = 15;
 
-      await new Promise((resolve, reject) => {
-        task.on("state_changed",
-          (snap) => {
-            const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-            uploadProg.value = pct;
-            setUploadMsg(`Uploading… ${pct}%`);
-          },
-          (err) => reject(err),
-          () => resolve()
-        );
-      });
+      const res = await fetch(endpoint, { method: "POST", body: fd });
+      saveProg.value = 75;
 
-      const url = await getDownloadURL(task.snapshot.ref);
-      return url;
+      if (!res.ok){
+        const txt = await res.text();
+        throw new Error("Cloudinary upload failed: " + txt.slice(0, 300));
+      }
+      const data = await res.json();
+      saveProg.value = 95;
+
+      return data.secure_url || data.url || null;
     }
 
-    async function ensureProfileDocAndSave({ photoUrl, bio }){
+    async function upsertProfile({ photoUrl, bio }){
       const pRef = doc(db, "profiles", uid);
       const pSnap = await getDoc(pRef);
-      const exists = pSnap.exists();
 
-      // Keep your existing schema, but add/merge bio/photoUrl safely
-      const base = {
-        uid,
-        updatedAt: serverTimestamp()
-      };
-
-      if (!exists){
-        base.displayName = currentUser?.displayName || "Member";
-        base.homeState = "";
-        base.createdAt = serverTimestamp();
-        base.bio = bio ?? "";
-        if (photoUrl) base.photoUrl = photoUrl;
-        await setDoc(pRef, base, { merge: true });
+      if (!pSnap.exists()){
+        await setDoc(pRef, {
+          uid,
+          displayName: currentUser?.displayName || "Member",
+          photoUrl: photoUrl || "",
+          bio: bio || "",
+          homeState: "",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
       } else {
-        const patch = { ...base };
+        const patch = { updatedAt: serverTimestamp() };
         if (typeof bio === "string") patch.bio = bio;
         if (photoUrl) patch.photoUrl = photoUrl;
         await updateDoc(pRef, patch);
       }
     }
 
-    // Upload / replace profile photo (kept for convenience; also updates Firestore immediately)
-    uploadPhotoBtn.addEventListener("click", async () => {
-      if (!isOwner){
-        setUploadMsg("You must be logged in as this user to change the photo.", true);
-        return;
-      }
-      const f = photoFile.files?.[0];
-      if (!f){
-        setUploadMsg("Pick an image file first.", true);
-        return;
-      }
-
-      uploadPhotoBtn.disabled = true;
-      saveProfileBtn.disabled = true;
-      setUploadMsg("Uploading…");
-      setSaveMsg("");
-
-      try{
-        const url = await uploadProfilePhoto(uid, f);
-        await ensureProfileDocAndSave({ photoUrl: url, bio: (bioInput.value || "").trim() });
-
-        avatarEl.src = cacheBust(url);
-        avatarEl.style.display = "block";
-
-        loadedProfile = loadedProfile || {};
-        loadedProfile.photoUrl = url;
-
-        selectedFile = null;
-        try{ photoFile.value = ""; }catch{}
-        setUploadMsg("✅ Profile photo updated.");
-        refreshSaveButtonState();
-      }catch(e){
-        setUploadMsg("❌ Upload failed: " + (e?.message || String(e)), true);
-      }finally{
-        uploadPhotoBtn.disabled = false;
-        uploadProg.style.display = "none";
-      }
-    });
-
-    // NEW: Save Profile (uploads photo if selected + saves bio)
+    // Save Profile (uploads photo to Cloudinary if selected + saves bio)
     saveProfileBtn.addEventListener("click", async () => {
       if (!isOwner){
         setSaveMsg("You must be logged in as this user to save the profile.", true);
@@ -438,24 +390,24 @@
       }
 
       saveProfileBtn.disabled = true;
-      uploadPhotoBtn.disabled = true;
+      photoFile.disabled = true;
+      bioInput.disabled = true;
       setSaveMsg("Saving…");
-      setUploadMsg("");
+      saveProg.style.display = "none";
 
       try{
         const bio = (bioInput.value || "").trim();
 
-        // If user selected a new file, upload it first
         let newPhotoUrl = null;
-        const f = photoFile.files?.[0] || selectedFile;
-        if (f){
-          setUploadMsg("Uploading…");
-          newPhotoUrl = await uploadProfilePhoto(uid, f);
+        if (selectedFile){
+          setSaveMsg("Uploading image…");
+          newPhotoUrl = await uploadToCloudinary(selectedFile);
         }
 
-        await ensureProfileDocAndSave({ photoUrl: newPhotoUrl, bio });
+        setSaveMsg("Updating profile…");
+        await upsertProfile({ photoUrl: newPhotoUrl, bio });
 
-        // Update visible bio + avatar immediately
+        // update UI
         bioEl.textContent = bio ? bio : "No bio yet.";
         lastSavedBio = bio;
 
@@ -467,17 +419,19 @@
 
           selectedFile = null;
           try{ photoFile.value = ""; }catch{}
-          uploadPhotoBtn.disabled = true; // no file selected now
-          setUploadMsg("✅ Photo uploaded.");
         }
 
+        loadedProfile = loadedProfile || {};
+        loadedProfile.bio = bio;
+
         setSaveMsg("✅ Saved.");
-      }catch(e){
-        setSaveMsg("❌ Save failed: " + (e?.message || String(e)), true);
-      }finally{
-        uploadProg.style.display = "none";
-        uploadPhotoBtn.disabled = !photoFile.files?.[0];
-        refreshSaveButtonState();
+      } catch(e){
+        setSaveMsg("❌ " + (e?.message || String(e)), true);
+      } finally {
+        saveProg.style.display = "none";
+        photoFile.disabled = false;
+        bioInput.disabled = false;
+        refreshSaveBtn();
       }
     });
 
@@ -498,11 +452,10 @@
         bioEl.textContent = "No bio yet.";
         avatarEl.style.display = "none";
 
-        // If owner and doc doesn't exist yet, start with blank editor
         if (isOwner){
           bioInput.value = "";
           lastSavedBio = "";
-          refreshSaveButtonState();
+          refreshSaveBtn();
         }
         return;
       }
@@ -516,13 +469,6 @@
       const bioText = (p.bio && String(p.bio).trim()) ? String(p.bio) : "";
       bioEl.textContent = bioText ? bioText : "No bio yet.";
 
-      // owner editor prefill
-      if (isOwner){
-        bioInput.value = bioText;
-        lastSavedBio = bioText.trim();
-        refreshSaveButtonState();
-      }
-
       if (p.photoUrl){
         avatarEl.src = cacheBust(p.photoUrl);
         avatarEl.style.display = "block";
@@ -530,8 +476,14 @@
         avatarEl.style.display = "none";
       }
 
+      if (isOwner){
+        bioInput.value = bioText;
+        lastSavedBio = bioText.trim();
+        refreshSaveBtn();
+      }
+
       avatarEl.onerror = () => {
-        statusEl.textContent = "⚠️ Photo URL saved, but the image couldn't load (cache/permissions).";
+        statusEl.textContent = "⚠️ Photo URL saved, but the image couldn't load.";
         avatarEl.style.display = "none";
       };
     }
