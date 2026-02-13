@@ -63,7 +63,7 @@
   </header>
 
   <div class="wrap">
-    <div id="status" class="card">Loading… (member v3)</div>
+    <div id="status" class="card">Loading… (member v4)</div>
 
     <div id="profileCard" class="card" style="display:none">
       <div class="row" style="justify-content:space-between">
@@ -181,6 +181,11 @@
         .replaceAll('"',"&quot;").replaceAll("'","&#039;");
     }
 
+    function cacheBust(url){
+      if (!url) return url;
+      return url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+    }
+
     function setUploadMsg(msg, isError=false){
       uploadMsg.textContent = msg || "";
       uploadMsg.className = "small" + (isError ? " danger" : "");
@@ -282,6 +287,7 @@
       setUploadMsg("Uploading…");
 
       try{
+        // Overwrite same path, but we cache-bust when displaying
         const path = `profilePics/${uid}.jpg`;
         const storageRef = ref(storage, path);
 
@@ -325,7 +331,7 @@
           });
         }
 
-        avatarEl.src = url;
+        avatarEl.src = cacheBust(url);
         avatarEl.style.display = "block";
         setUploadMsg("✅ Profile photo updated.");
       }catch(e){
@@ -342,7 +348,6 @@
       const pRef = doc(db, "profiles", uid);
       const pSnap = await getDoc(pRef);
 
-      // Show the card even if profile doc doesn't exist (so you can still upload if owner)
       profileCard.style.display = "block";
       copyLinkBtn.style.display = "inline-block";
       memberUidEl.textContent = `UID: ${uid}`;
@@ -361,11 +366,16 @@
       bioEl.textContent = (p.bio && String(p.bio).trim()) ? String(p.bio) : "No bio yet.";
 
       if (p.photoUrl){
-        avatarEl.src = p.photoUrl;
+        avatarEl.src = cacheBust(p.photoUrl);
         avatarEl.style.display = "block";
       } else {
         avatarEl.style.display = "none";
       }
+
+      avatarEl.onerror = () => {
+        statusEl.textContent = "⚠️ Photo URL saved, but the image couldn't load (cache/permissions).";
+        avatarEl.style.display = "none";
+      };
     }
 
     async function loadPosts(){
