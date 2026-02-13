@@ -4,7 +4,33 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>BestFishingSecrets — Feed</title>
-  <style>
+  <style>.post{
+  overflow: hidden;
+}
+.post img{
+  width: 100%;
+  display:block;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.post .meta, .post .row, .post .top{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+.post .meta small, .post .muted{
+  color: var(--muted);
+}
+
+/* “like / comment / share” button style if you have action rows */
+.actions button{
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.actions button:hover{
+  filter: brightness(1.08);
+}
     :root{
       /* ====== Earth theme ====== */
       --bg:#0b120d;        /* deep forest */
