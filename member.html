@@ -45,6 +45,20 @@
       color:var(--muted);
       max-width: 320px;
     }
+    textarea{
+      width:100%;
+      max-width: 640px;
+      min-height: 90px;
+      border:1px solid rgba(201,194,170,.22);
+      border-radius:12px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline: none;
+      font: inherit;
+      resize: vertical;
+    }
+    textarea::placeholder{color:rgba(201,194,170,.55)}
     progress{width:220px;height:12px}
     @media (max-width:720px){
       .avatar{width:64px;height:64px}
@@ -63,7 +77,7 @@
   </header>
 
   <div class="wrap">
-    <div id="status" class="card">Loading… (member v4)</div>
+    <div id="status" class="card">Loading… (member v4 + save-profile)</div>
 
     <div id="profileCard" class="card" style="display:none">
       <div class="row" style="justify-content:space-between">
@@ -81,22 +95,32 @@
         </div>
       </div>
 
-      <!-- Owner-only upload controls -->
+      <!-- Owner-only edit controls -->
       <div id="photoControls" class="card" style="margin:12px 0 0 0; display:none; padding:12px">
         <div class="row" style="justify-content:space-between">
           <div>
-            <b>Profile photo</b>
-            <div class="small">Only you can change your photo.</div>
+            <b>Edit profile</b>
+            <div class="small">Only you can change your photo and bio.</div>
           </div>
           <div class="small" id="photoOwnerHint"></div>
         </div>
 
         <div class="row" style="margin-top:10px">
           <input id="photoFile" type="file" accept="image/*" />
-          <button id="uploadPhotoBtn" class="btn" type="button" disabled>Upload / Replace</button>
+          <button id="uploadPhotoBtn" class="btn" type="button" disabled>Upload / Replace Photo</button>
           <progress id="uploadProg" value="0" max="100" style="display:none"></progress>
         </div>
-        <div id="uploadMsg" class="small" style="margin-top:8px"></div>
+
+        <div style="margin-top:12px">
+          <div class="small" style="margin:0 0 6px 0"><b>Bio</b></div>
+          <textarea id="bioInput" placeholder="Tell people who you are…"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button id="saveProfileBtn" class="btn" type="button" disabled>Save Profile</button>
+            <div id="profileSaveMsg" class="small"></div>
+          </div>
+        </div>
+
+        <div id="uploadMsg" class="small" style="margin-top:10px"></div>
       </div>
 
       <hr class="hr" />
@@ -172,6 +196,10 @@
     const uploadProg = document.getElementById("uploadProg");
     const uploadMsg = document.getElementById("uploadMsg");
 
+    const bioInput = document.getElementById("bioInput");
+    const saveProfileBtn = document.getElementById("saveProfileBtn");
+    const profileSaveMsg = document.getElementById("profileSaveMsg");
+
     const gridEl = document.getElementById("grid");
     const countEl = document.getElementById("count");
 
@@ -189,6 +217,11 @@
     function setUploadMsg(msg, isError=false){
       uploadMsg.textContent = msg || "";
       uploadMsg.className = "small" + (isError ? " danger" : "");
+    }
+
+    function setSaveMsg(msg, isError=false){
+      profileSaveMsg.textContent = msg || "";
+      profileSaveMsg.className = "small" + (isError ? " danger" : "");
     }
 
     function postCardHTML(p){
@@ -231,6 +264,11 @@
     let currentUser = null;
     let isOwner = false;
 
+    // Track loaded profile (so owner textarea pre-fills correctly)
+    let loadedProfile = null;
+    let lastSavedBio = "";
+    let selectedFile = null;
+
     function renderOwnerControls(){
       if (isOwner){
         photoControls.style.display = "block";
@@ -240,17 +278,42 @@
       }
     }
 
+    function refreshSaveButtonState(){
+      if (!isOwner){
+        saveProfileBtn.disabled = true;
+        return;
+      }
+      const bioNow = (bioInput.value || "").trim();
+      const bioChanged = bioNow !== (lastSavedBio || "");
+      const hasFile = !!selectedFile;
+      // Enable if either bio changed OR a new file is selected
+      saveProfileBtn.disabled = !(bioChanged || hasFile);
+    }
+
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       isOwner = !!user && user.uid === uid;
       renderOwnerControls();
+
+      // If profile already loaded, hydrate owner textarea
+      if (isOwner && loadedProfile){
+        const b = (loadedProfile.bio && String(loadedProfile.bio).trim()) ? String(loadedProfile.bio) : "";
+        bioInput.value = b;
+        lastSavedBio = b.trim();
+        refreshSaveButtonState();
+      }
     });
 
     // Enable upload button once a file is chosen
     photoFile.addEventListener("change", () => {
       const f = photoFile.files?.[0];
       uploadPhotoBtn.disabled = !f;
-      if (!f) return;
+      selectedFile = f || null;
+
+      if (!f){
+        refreshSaveButtonState();
+        return;
+      }
 
       // preview
       try{
@@ -258,9 +321,77 @@
         avatarEl.style.display = "block";
       }catch{}
       setUploadMsg("");
+      setSaveMsg("");
+      refreshSaveButtonState();
     });
 
-    // Upload / replace profile photo
+    // Bio edits enable Save Profile
+    bioInput.addEventListener("input", () => {
+      setSaveMsg("");
+      refreshSaveButtonState();
+    });
+
+    async function uploadProfilePhoto(uid, file){
+      if (!file) return null;
+      if (!file.type.startsWith("image/")) throw new Error("That file isn't an image.");
+      const maxBytes = 5 * 1024 * 1024;
+      if (file.size > maxBytes) throw new Error("Image is too large. Try under ~5MB.");
+
+      uploadProg.style.display = "inline-block";
+      uploadProg.value = 0;
+
+      // Overwrite same path, but we cache-bust when displaying
+      const path = `profilePics/${uid}.jpg`;
+      const storageRef = ref(storage, path);
+
+      const task = uploadBytesResumable(storageRef, file, {
+        contentType: file.type,
+        cacheControl: "public, max-age=3600"
+      });
+
+      await new Promise((resolve, reject) => {
+        task.on("state_changed",
+          (snap) => {
+            const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+            uploadProg.value = pct;
+            setUploadMsg(`Uploading… ${pct}%`);
+          },
+          (err) => reject(err),
+          () => resolve()
+        );
+      });
+
+      const url = await getDownloadURL(task.snapshot.ref);
+      return url;
+    }
+
+    async function ensureProfileDocAndSave({ photoUrl, bio }){
+      const pRef = doc(db, "profiles", uid);
+      const pSnap = await getDoc(pRef);
+      const exists = pSnap.exists();
+
+      // Keep your existing schema, but add/merge bio/photoUrl safely
+      const base = {
+        uid,
+        updatedAt: serverTimestamp()
+      };
+
+      if (!exists){
+        base.displayName = currentUser?.displayName || "Member";
+        base.homeState = "";
+        base.createdAt = serverTimestamp();
+        base.bio = bio ?? "";
+        if (photoUrl) base.photoUrl = photoUrl;
+        await setDoc(pRef, base, { merge: true });
+      } else {
+        const patch = { ...base };
+        if (typeof bio === "string") patch.bio = bio;
+        if (photoUrl) patch.photoUrl = photoUrl;
+        await updateDoc(pRef, patch);
+      }
+    }
+
+    // Upload / replace profile photo (kept for convenience; also updates Firestore immediately)
     uploadPhotoBtn.addEventListener("click", async () => {
       if (!isOwner){
         setUploadMsg("You must be logged in as this user to change the photo.", true);
@@ -271,74 +402,82 @@
         setUploadMsg("Pick an image file first.", true);
         return;
       }
-      if (!f.type.startsWith("image/")){
-        setUploadMsg("That file isn't an image.", true);
-        return;
-      }
-      const maxBytes = 5 * 1024 * 1024;
-      if (f.size > maxBytes){
-        setUploadMsg("Image is too large. Try under ~5MB.", true);
-        return;
-      }
 
       uploadPhotoBtn.disabled = true;
-      uploadProg.style.display = "inline-block";
-      uploadProg.value = 0;
+      saveProfileBtn.disabled = true;
       setUploadMsg("Uploading…");
+      setSaveMsg("");
 
       try{
-        // Overwrite same path, but we cache-bust when displaying
-        const path = `profilePics/${uid}.jpg`;
-        const storageRef = ref(storage, path);
-
-        const task = uploadBytesResumable(storageRef, f, {
-          contentType: f.type,
-          cacheControl: "public, max-age=3600"
-        });
-
-        await new Promise((resolve, reject) => {
-          task.on("state_changed",
-            (snap) => {
-              const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-              uploadProg.value = pct;
-              setUploadMsg(`Uploading… ${pct}%`);
-            },
-            (err) => reject(err),
-            () => resolve()
-          );
-        });
-
-        const url = await getDownloadURL(task.snapshot.ref);
-
-        // Write photoUrl to Firestore profile
-        const pRef = doc(db, "profiles", uid);
-        const pSnap = await getDoc(pRef);
-
-        if (!pSnap.exists()){
-          await setDoc(pRef, {
-            uid,
-            displayName: currentUser?.displayName || "Member",
-            photoUrl: url,
-            bio: "",
-            homeState: "",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        } else {
-          await updateDoc(pRef, {
-            photoUrl: url,
-            updatedAt: serverTimestamp()
-          });
-        }
+        const url = await uploadProfilePhoto(uid, f);
+        await ensureProfileDocAndSave({ photoUrl: url, bio: (bioInput.value || "").trim() });
 
         avatarEl.src = cacheBust(url);
         avatarEl.style.display = "block";
+
+        loadedProfile = loadedProfile || {};
+        loadedProfile.photoUrl = url;
+
+        selectedFile = null;
+        try{ photoFile.value = ""; }catch{}
         setUploadMsg("✅ Profile photo updated.");
+        refreshSaveButtonState();
       }catch(e){
         setUploadMsg("❌ Upload failed: " + (e?.message || String(e)), true);
       }finally{
         uploadPhotoBtn.disabled = false;
         uploadProg.style.display = "none";
+      }
+    });
+
+    // NEW: Save Profile (uploads photo if selected + saves bio)
+    saveProfileBtn.addEventListener("click", async () => {
+      if (!isOwner){
+        setSaveMsg("You must be logged in as this user to save the profile.", true);
+        return;
+      }
+
+      saveProfileBtn.disabled = true;
+      uploadPhotoBtn.disabled = true;
+      setSaveMsg("Saving…");
+      setUploadMsg("");
+
+      try{
+        const bio = (bioInput.value || "").trim();
+
+        // If user selected a new file, upload it first
+        let newPhotoUrl = null;
+        const f = photoFile.files?.[0] || selectedFile;
+        if (f){
+          setUploadMsg("Uploading…");
+          newPhotoUrl = await uploadProfilePhoto(uid, f);
+        }
+
+        await ensureProfileDocAndSave({ photoUrl: newPhotoUrl, bio });
+
+        // Update visible bio + avatar immediately
+        bioEl.textContent = bio ? bio : "No bio yet.";
+        lastSavedBio = bio;
+
+        if (newPhotoUrl){
+          avatarEl.src = cacheBust(newPhotoUrl);
+          avatarEl.style.display = "block";
+          loadedProfile = loadedProfile || {};
+          loadedProfile.photoUrl = newPhotoUrl;
+
+          selectedFile = null;
+          try{ photoFile.value = ""; }catch{}
+          uploadPhotoBtn.disabled = true; // no file selected now
+          setUploadMsg("✅ Photo uploaded.");
+        }
+
+        setSaveMsg("✅ Saved.");
+      }catch(e){
+        setSaveMsg("❌ Save failed: " + (e?.message || String(e)), true);
+      }finally{
+        uploadProg.style.display = "none";
+        uploadPhotoBtn.disabled = !photoFile.files?.[0];
+        refreshSaveButtonState();
       }
     });
 
@@ -353,17 +492,36 @@
       memberUidEl.textContent = `UID: ${uid}`;
 
       if (!pSnap.exists()){
+        loadedProfile = null;
         nameEl.textContent = "Member";
         homeStateEl.textContent = "";
         bioEl.textContent = "No bio yet.";
         avatarEl.style.display = "none";
+
+        // If owner and doc doesn't exist yet, start with blank editor
+        if (isOwner){
+          bioInput.value = "";
+          lastSavedBio = "";
+          refreshSaveButtonState();
+        }
         return;
       }
 
       const p = pSnap.data() || {};
+      loadedProfile = p;
+
       nameEl.textContent = p.displayName || "Member";
       homeStateEl.textContent = p.homeState ? String(p.homeState) : "";
-      bioEl.textContent = (p.bio && String(p.bio).trim()) ? String(p.bio) : "No bio yet.";
+
+      const bioText = (p.bio && String(p.bio).trim()) ? String(p.bio) : "";
+      bioEl.textContent = bioText ? bioText : "No bio yet.";
+
+      // owner editor prefill
+      if (isOwner){
+        bioInput.value = bioText;
+        lastSavedBio = bioText.trim();
+        refreshSaveButtonState();
+      }
 
       if (p.photoUrl){
         avatarEl.src = cacheBust(p.photoUrl);
