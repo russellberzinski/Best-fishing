@@ -7,6 +7,7 @@
   <style>
     :root{
       --bg:#0b120d; --card:#121b12; --text:#f3f1e7; --muted:#c9c2aa; --line:#2c3a2b; --accent:#7aa35a;
+      --danger:#ff6b6b;
     }
     *{box-sizing:border-box}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:var(--text)}
@@ -20,130 +21,389 @@
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
     .post-img{width:100%;border-radius:14px;border:1px solid var(--line);display:block;margin:0 0 10px 0;background:#0e1510}
     .title{font-weight:800;margin:0 0 6px;font-size:16px}
-    .pill{display:inline-block;border:1px solid var(--line);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
+    .pill{display:inline-block;border:1px solid var(--line);background:rgba(176,138,90,.14);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
     a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .btn{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(18,27,18,.92), rgba(11,18,13,.92));
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font:inherit;
+    }
+    .btn:hover{filter:brightness(1.08)}
+    .btn[disabled]{opacity:.55;cursor:not-allowed}
+    .hr{height:1px;background:rgba(201,194,170,.18);border:0;margin:12px 0}
+    .small{font-size:12px;color:var(--muted)}
+    .danger{color:var(--danger)}
+    input[type="file"]{
+      border:1px dashed rgba(201,194,170,.28);
+      padding:8px;
+      border-radius:12px;
+      color:var(--muted);
+      max-width: 320px;
+    }
+    progress{width:220px;height:12px}
+    @media (max-width:720px){
+      .avatar{width:64px;height:64px}
+      progress{width:160px}
+    }
   </style>
 </head>
 <body>
-<header>
-  <div class="row" style="justify-content:space-between">
-    <div><b>BestFishingSecrets</b> — Member</div>
-    <div><a href="index.html">← Back to feed</a></div>
-  </div>
-</header>
-
-<div class="wrap">
-  <div id="status" class="card">Loading… (v2)</div>
-
-  <div id="profileCard" class="card" style="display:none">
-    <div class="row">
-      <img id="avatar" class="avatar" alt="Profile photo">
-      <div>
-        <p id="name" class="name"></p>
-        <p id="homeState" class="meta"></p>
+  <header>
+    <div class="row" style="justify-content:space-between">
+      <div><b>BestFishingSecrets</b> — Member</div>
+      <div class="row" style="gap:10px">
+        <a href="index.html">← Back to feed</a>
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="card">
-    <div class="row" style="justify-content:space-between">
-      <div><b>Posts</b></div>
-      <span id="count" class="pill">0</span>
+  <div class="wrap">
+    <div id="status" class="card">Loading… (member v3)</div>
+
+    <div id="profileCard" class="card" style="display:none">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <img id="avatar" class="avatar" alt="Profile photo" style="display:none">
+          <div>
+            <p id="name" class="name"></p>
+            <p id="homeState" class="meta"></p>
+            <p id="memberUid" class="meta"></p>
+          </div>
+        </div>
+
+        <div class="row" style="gap:10px; justify-content:flex-end">
+          <button id="copyLinkBtn" class="btn" type="button" style="display:none">Copy profile link</button>
+        </div>
+      </div>
+
+      <!-- Owner-only upload controls -->
+      <div id="photoControls" class="card" style="margin:12px 0 0 0; display:none; padding:12px">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <b>Profile photo</b>
+            <div class="small">Only you can change your photo.</div>
+          </div>
+          <div class="small" id="photoOwnerHint"></div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <input id="photoFile" type="file" accept="image/*" />
+          <button id="uploadPhotoBtn" class="btn" type="button" disabled>Upload / Replace</button>
+          <progress id="uploadProg" value="0" max="100" style="display:none"></progress>
+        </div>
+        <div id="uploadMsg" class="small" style="margin-top:8px"></div>
+      </div>
+
+      <hr class="hr" />
+
+      <p class="meta" style="margin-top:0"><b>Bio</b></p>
+      <p id="bio" class="meta" style="margin-top:0; white-space:pre-wrap"></p>
     </div>
-  </div>
 
-  <div id="grid" class="grid"></div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, collection, getDocs, query, where
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
-  authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
-  projectId: "bestfishingsecrets-932cf",
-  storageBucket: "bestfishingsecrets-932cf.firebasestorage.app",
-  messagingSenderId: "387299114354",
-  appId: "1:387299114354:web:cbadda074f9dd7083ef1eb"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const statusEl = document.getElementById("status");
-const profileCard = document.getElementById("profileCard");
-const avatarEl = document.getElementById("avatar");
-const nameEl = document.getElementById("name");
-const homeStateEl = document.getElementById("homeState");
-
-const gridEl = document.getElementById("grid");
-const countEl = document.getElementById("count");
-
-const params = new URLSearchParams(location.search);
-const uid = params.get("uid");
-
-if (!uid){
-  statusEl.textContent = "❌ Missing uid in URL.";
-  throw new Error("Missing uid");
-}
-
-function postCardHTML(p){
-  const title = p.title ?? "Untitled catch";
-  const state = p.state ?? "Unknown";
-  const imageUrl = p.imageUrl ?? "";
-
-  return `
     <div class="card">
-      ${imageUrl ? `<img class="post-img" src="${imageUrl}" />` : ""}
-      <p class="title">${title}</p>
-      <p class="meta">${state}</p>
+      <div class="row" style="justify-content:space-between">
+        <div><b>Posts</b></div>
+        <span id="count" class="pill">0</span>
+      </div>
+      <p class="meta" style="margin:8px 0 0">Free previews only. Paid content is still locked on the member page.</p>
     </div>
-  `;
-}
 
-async function load(){
-  statusEl.textContent = "Loading profile…";
+    <div id="grid" class="grid"></div>
+  </div>
 
-  try{
-    const pSnap = await getDoc(doc(db, "profiles", uid));
-    if (pSnap.exists()){
-      const p = pSnap.data();
+  <!-- Always-on error reporter (shows in the status card) -->
+  <script>
+    (function(){
+      const statusEl = document.getElementById("status");
+      function showErr(prefix, e){
+        const msg =
+          (e && (e.message || e.reason || e.error?.message)) ?
+            (e.message || e.reason || e.error.message) :
+            String(e);
+        statusEl.textContent = "❌ " + prefix + ":\n" + msg;
+      }
+      window.addEventListener("error", (e) => showErr("Script error", e));
+      window.addEventListener("unhandledrejection", (e) => showErr("Promise rejection", e));
+    })();
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, doc, getDoc, collection, getDocs, query, where, orderBy,
+      setDoc, updateDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
+      authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
+      projectId: "bestfishingsecrets-932cf",
+      storageBucket: "bestfishingsecrets-932cf.firebasestorage.app",
+      messagingSenderId: "387299114354",
+      appId: "1:387299114354:web:cbadda074f9dd7083ef1eb",
+      measurementId: "G-Z8L28MXNEG"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    const statusEl = document.getElementById("status");
+    const profileCard = document.getElementById("profileCard");
+    const avatarEl = document.getElementById("avatar");
+    const nameEl = document.getElementById("name");
+    const homeStateEl = document.getElementById("homeState");
+    const memberUidEl = document.getElementById("memberUid");
+    const bioEl = document.getElementById("bio");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+
+    const photoControls = document.getElementById("photoControls");
+    const photoOwnerHint = document.getElementById("photoOwnerHint");
+    const photoFile = document.getElementById("photoFile");
+    const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
+    const uploadProg = document.getElementById("uploadProg");
+    const uploadMsg = document.getElementById("uploadMsg");
+
+    const gridEl = document.getElementById("grid");
+    const countEl = document.getElementById("count");
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+    function setUploadMsg(msg, isError=false){
+      uploadMsg.textContent = msg || "";
+      uploadMsg.className = "small" + (isError ? " danger" : "");
+    }
+
+    function postCardHTML(p){
+      const title = p.title ?? "Untitled catch";
+      const state = p.state ?? "Unknown";
+      const imageUrl = p.imageUrl ?? "";
+      const created = p.createdAt?.toDate ? p.createdAt.toDate() : null;
+      const createdStr = created ? created.toLocaleString() : "";
+
+      return `
+        <div class="card">
+          ${imageUrl ? `<img class="post-img" src="${esc(imageUrl)}" alt="Catch photo" loading="lazy" />` : ""}
+          <p class="title">${esc(title)}</p>
+          <p class="meta">${esc(state)}${createdStr ? " • " + esc(createdStr) : ""}</p>
+        </div>
+      `;
+    }
+
+    // --- uid required ---
+    const params = new URLSearchParams(location.search);
+    const uid = params.get("uid");
+    if (!uid){
+      statusEl.textContent = "❌ Missing uid. Open from the feed via “View my page”.";
+      throw new Error("Missing uid");
+    }
+
+    // Copy link
+    async function copyProfileLink(){
+      try{
+        await navigator.clipboard.writeText(location.href);
+        copyLinkBtn.textContent = "Copied!";
+        setTimeout(() => (copyLinkBtn.textContent = "Copy profile link"), 1200);
+      }catch{
+        prompt("Copy this link:", location.href);
+      }
+    }
+    copyLinkBtn.addEventListener("click", copyProfileLink);
+
+    // Owner detection
+    let currentUser = null;
+    let isOwner = false;
+
+    function renderOwnerControls(){
+      if (isOwner){
+        photoControls.style.display = "block";
+        photoOwnerHint.textContent = "You are viewing your profile.";
+      } else {
+        photoControls.style.display = "none";
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      isOwner = !!user && user.uid === uid;
+      renderOwnerControls();
+    });
+
+    // Enable upload button once a file is chosen
+    photoFile.addEventListener("change", () => {
+      const f = photoFile.files?.[0];
+      uploadPhotoBtn.disabled = !f;
+      if (!f) return;
+
+      // preview
+      try{
+        avatarEl.src = URL.createObjectURL(f);
+        avatarEl.style.display = "block";
+      }catch{}
+      setUploadMsg("");
+    });
+
+    // Upload / replace profile photo
+    uploadPhotoBtn.addEventListener("click", async () => {
+      if (!isOwner){
+        setUploadMsg("You must be logged in as this user to change the photo.", true);
+        return;
+      }
+      const f = photoFile.files?.[0];
+      if (!f){
+        setUploadMsg("Pick an image file first.", true);
+        return;
+      }
+      if (!f.type.startsWith("image/")){
+        setUploadMsg("That file isn't an image.", true);
+        return;
+      }
+      const maxBytes = 5 * 1024 * 1024;
+      if (f.size > maxBytes){
+        setUploadMsg("Image is too large. Try under ~5MB.", true);
+        return;
+      }
+
+      uploadPhotoBtn.disabled = true;
+      uploadProg.style.display = "inline-block";
+      uploadProg.value = 0;
+      setUploadMsg("Uploading…");
+
+      try{
+        const path = `profilePics/${uid}.jpg`;
+        const storageRef = ref(storage, path);
+
+        const task = uploadBytesResumable(storageRef, f, {
+          contentType: f.type,
+          cacheControl: "public, max-age=3600"
+        });
+
+        await new Promise((resolve, reject) => {
+          task.on("state_changed",
+            (snap) => {
+              const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+              uploadProg.value = pct;
+              setUploadMsg(`Uploading… ${pct}%`);
+            },
+            (err) => reject(err),
+            () => resolve()
+          );
+        });
+
+        const url = await getDownloadURL(task.snapshot.ref);
+
+        // Write photoUrl to Firestore profile
+        const pRef = doc(db, "profiles", uid);
+        const pSnap = await getDoc(pRef);
+
+        if (!pSnap.exists()){
+          await setDoc(pRef, {
+            uid,
+            displayName: currentUser?.displayName || "Member",
+            photoUrl: url,
+            bio: "",
+            homeState: "",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } else {
+          await updateDoc(pRef, {
+            photoUrl: url,
+            updatedAt: serverTimestamp()
+          });
+        }
+
+        avatarEl.src = url;
+        avatarEl.style.display = "block";
+        setUploadMsg("✅ Profile photo updated.");
+      }catch(e){
+        setUploadMsg("❌ Upload failed: " + (e?.message || String(e)), true);
+      }finally{
+        uploadPhotoBtn.disabled = false;
+        uploadProg.style.display = "none";
+      }
+    });
+
+    async function loadProfile(){
+      statusEl.textContent = "Loading profile…";
+
+      const pRef = doc(db, "profiles", uid);
+      const pSnap = await getDoc(pRef);
+
+      // Show the card even if profile doc doesn't exist (so you can still upload if owner)
+      profileCard.style.display = "block";
+      copyLinkBtn.style.display = "inline-block";
+      memberUidEl.textContent = `UID: ${uid}`;
+
+      if (!pSnap.exists()){
+        nameEl.textContent = "Member";
+        homeStateEl.textContent = "";
+        bioEl.textContent = "No bio yet.";
+        avatarEl.style.display = "none";
+        return;
+      }
+
+      const p = pSnap.data() || {};
       nameEl.textContent = p.displayName || "Member";
-      homeStateEl.textContent = p.homeState || "";
+      homeStateEl.textContent = p.homeState ? String(p.homeState) : "";
+      bioEl.textContent = (p.bio && String(p.bio).trim()) ? String(p.bio) : "No bio yet.";
+
       if (p.photoUrl){
         avatarEl.src = p.photoUrl;
+        avatarEl.style.display = "block";
+      } else {
+        avatarEl.style.display = "none";
       }
-      profileCard.style.display = "block";
     }
-  }catch(e){
-    statusEl.textContent = "❌ Profile load failed: " + e.message;
-    return;
-  }
 
-  statusEl.textContent = "Loading posts…";
+    async function loadPosts(){
+      statusEl.textContent = "Loading posts…";
+      gridEl.innerHTML = "";
 
-  try{
-    const snap = await getDocs(query(
-      collection(db, "posts"),
-      where("userId", "==", uid)
-    ));
+      let posts = [];
+      try{
+        let snap;
+        try{
+          snap = await getDocs(query(
+            collection(db, "posts"),
+            where("userId", "==", uid),
+            orderBy("createdAt", "desc")
+          ));
+        }catch{
+          snap = await getDocs(query(
+            collection(db, "posts"),
+            where("userId", "==", uid)
+          ));
+        }
+        snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
+      }catch(e){
+        statusEl.textContent = "❌ Error loading posts:\n" + (e?.message || String(e));
+        return;
+      }
 
-    let posts = [];
-    snap.forEach(d => posts.push(d.data()));
+      countEl.textContent = String(posts.length);
+      gridEl.innerHTML = posts.map(postCardHTML).join("");
+    }
 
-    countEl.textContent = posts.length;
-    gridEl.innerHTML = posts.map(postCardHTML).join("");
-
-    statusEl.textContent = "Loaded.";
-  }catch(e){
-    statusEl.textContent = "❌ Post load failed: " + e.message;
-  }
-}
-
-load();
-</script>
+    try{
+      await loadProfile();
+      await loadPosts();
+      statusEl.textContent = "Loaded.";
+    }catch(e){
+      statusEl.textContent = "❌ Load failed:\n" + (e?.message || String(e));
+    }
+  </script>
 </body>
 </html>
