@@ -3,1103 +3,900 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RealFishingSecrets — Feed</title>
+  <title>AnglerPage — Free Feed</title>
   <style>
-.post{
-  overflow: hidden;
-}
-.post img{
-  width: 100%;
-  display:block;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.08);
-}
-.post .meta, .post .row, .post .top{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap: wrap;
-}
-.post .meta small, .post .muted{
-  color: var(--muted);
-}
-
-/* “like / comment / share” button style if you have action rows */
-.actions button{
-  background: rgba(0,0,0,.18);
-  border: 1px solid rgba(255,255,255,.10);
-}
-.actions button:hover{
-  filter: brightness(1.08);
-}
-
     :root{
-      /* ====== Earth theme ====== */
-      --bg:#0b120d;        /* deep forest */
-      --card:#121b12;      /* dark moss */
-      --text:#f3f1e7;      /* warm parchment */
-      --muted:#c9c2aa;     /* dried grass */
-      --line:#2c3a2b;      /* pine shadow */
-      --accent:#7aa35a;    /* leaf green */
-      --accent2:#b08a5a;   /* bark tan */
+      --bg:#0b120d; --card:#121b12; --text:#f3f1e7; --muted:#c9c2aa; --line:#2c3a2b; --accent:#7aa35a;
+      --danger:#ff6b6b; --ok:#77d18a;
     }
     *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:var(--text)}
-
-    /* ====== HERO COLLAGE HEADER ====== */
-    .hero-collage{
-      position:relative;
-      width:100%;
-      height:260px;
-      overflow:hidden;
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    a{color:inherit}
+    header{
+      position:sticky;top:0;z-index:10;
+      background:rgba(18,27,18,.92);backdrop-filter:blur(10px);
       border-bottom:1px solid var(--line);
-      background:var(--card);
     }
-    .collage-grid{
-      height:100%;
-      display:grid;
-      grid-template-columns:repeat(8,1fr);
+    .wrap{max-width:980px;margin:0 auto;padding:14px 16px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{
+      width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+      background:linear-gradient(180deg, rgba(122,163,90,.28), rgba(176,138,90,.12));
+      border:1px solid rgba(255,255,255,.10);
+      font-weight:800;
     }
-    .collage-grid img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-      filter:brightness(1.02) saturate(1.02);
-      transform:scale(1.02);
+    .brand h1{font-size:16px;margin:0;line-height:1.1}
+    .brand small{display:block;color:var(--muted);font-weight:500;margin-top:2px}
+    .nav{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      padding:10px 12px;border-radius:12px;
+      cursor:pointer;
+      transition:.15s;
+      font-weight:650;
     }
-    .hero-overlay{
-      position:absolute;
-      inset:0;
-      background:
-        radial-gradient(ellipse at center, rgba(11,18,13,.35) 0%, rgba(11,18,13,.78) 70%, rgba(11,18,13,.92) 100%);
-      pointer-events:none;
-    }
-    .hero-text{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform:translate(-50%,-50%);
-      text-align:center;
-      padding:0 14px;
-      width:min(980px, 100%);
-    }
-    .hero-text h1{
-      margin:0;
-      font-size:34px;
-      letter-spacing:.2px;
-      font-weight:900;
-      text-shadow:0 10px 30px rgba(0,0,0,.55);
-    }
-    .hero-text p{
-      margin:8px 0 0;
-      color:rgba(243,241,231,.86);
-      font-size:14px;
-      text-shadow:0 8px 22px rgba(0,0,0,.55);
-    }
-    .hero-badges{
-      margin-top:14px;
-      display:flex;
-      justify-content:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .hero-badge{
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(18,27,18,.55);
-      padding:7px 10px;
-      border-radius:999px;
+    .btn:hover{filter:brightness(1.08)}
+    .btn.primary{background:rgba(122,163,90,.22);border-color:rgba(122,163,90,.42)}
+    .btn.danger{background:rgba(255,107,107,.16);border-color:rgba(255,107,107,.36)}
+    .btn.ghost{background:transparent}
+    .btn.small{padding:8px 10px;border-radius:10px;font-weight:650}
+    .pill{
+      display:inline-flex;gap:8px;align-items:center;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
       font-size:12px;
-      color:rgba(243,241,231,.9);
-      backdrop-filter: blur(6px);
     }
 
-    /* ===== Bright moving banner ===== */
-    .ticker{
-      position: relative; /* sits under collage */
-      z-index: 6;
-      background: linear-gradient(
-        90deg,
-        rgba(176,138,90,.95),
-        rgba(201,162,92,.95),
-        rgba(176,138,90,.95)
-      );
-      color: #1a1408;
-      border-bottom: 1px solid rgba(0,0,0,.25);
-      box-shadow: 0 6px 18px rgba(0,0,0,.25);
-      overflow: hidden;
-    }
-
-    .ticker__track{
-      display: flex;
-      width: max-content;
-      animation: tickerScroll 22s linear infinite;
-      padding: 10px 0;
-    }
-
-    .ticker__item{
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 20px;
-      color: #1a1408;
-      font-size: 13px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .ticker__dot{
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #1a1408;
-      opacity: .65;
-    }
-
-    @keyframes tickerScroll{
-      from{ transform: translateX(0); }
-      to{ transform: translateX(-50%); }
-    }
-
-    /* Pause when user touches/holds */
-    .ticker:active .ticker__track,
-    .ticker:hover .ticker__track{
-      animation-play-state: paused;
-    }
-
-    /* Respect reduced motion */
-    @media (prefers-reduced-motion: reduce){
-      .ticker__track{ animation: none; }
-    }
-
-    /* Sticky header below collage */
-    header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
-    h1{margin:0;font-size:18px}
-
-    .wrap{max-width:980px;margin:0 auto;padding:16px}
-    .status{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:12px;color:var(--muted);white-space:pre-wrap}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
-    button,input,select,textarea{font:inherit}
-
-    button{
-      border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(18,27,18,.92), rgba(11,18,13,.92));
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer
-    }
-    button:hover{filter:brightness(1.08)}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .small-btn{padding:8px 10px;border-radius:12px;font-size:13px}
-
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-    .card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
-    .title{font-weight:800;margin:0 0 6px;font-size:16px}
-    .meta{color:var(--muted);font-size:13px;margin:0 0 10px}
-
-    .price{
-      display:inline-block;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(176,138,90,.18);
-      font-weight:800
-    }
-
-    a{color:var(--accent);text-decoration:none}
-    a:hover{text-decoration:underline}
-
-    .form{
-      border:1px solid var(--line);
-      border-radius:16px;
+    .grid{display:grid;grid-template-columns: 1fr; gap:12px; padding:16px}
+    .card{
       background:var(--card);
-      padding:14px;
-      margin-bottom:14px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      box-shadow:0 10px 26px rgba(0,0,0,.25);
+      overflow:hidden;
     }
-    .form h2{margin:0 0 10px;font-size:15px}
-    .fields{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
-    }
-    .fields .full{grid-column:1 / -1}
-    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    .card .pad{padding:14px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .between{justify-content:space-between}
+    .muted{color:var(--muted)}
+    .divider{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
 
-    input,select,textarea{
+    .avatar{
+      width:40px;height:40px;border-radius:14px;flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      object-fit:cover;
+    }
+    .who .name{font-weight:800}
+    .who .meta{font-size:12px;color:var(--muted);margin-top:2px}
+
+    .post-media{background:#0a0f0b}
+    .post-media img, .post-media video{
+      width:100%; display:block; max-height:520px; object-fit:cover;
+    }
+
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .action{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      cursor:pointer;
+      user-select:none;
+      font-weight:700;
+    }
+    .action:hover{filter:brightness(1.08)}
+    .action.on{background:rgba(122,163,90,.22);border-color:rgba(122,163,90,.42)}
+    .action small{color:var(--muted);font-weight:700}
+
+    input, textarea, select{
       width:100%;
-      border:1px solid var(--line);
-      background:#0e1510;
-      color:var(--text);
-      padding:10px 12px;
+      padding:11px 12px;
       border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.22);
+      color:var(--text);
       outline:none;
     }
-    textarea{min-height:90px;resize:vertical}
-    .hint{font-size:12px;color:var(--muted);margin-top:8px}
-    .ok{color:#bbf7d0}
+    textarea{min-height:92px;resize:vertical}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:720px){ .two{grid-template-columns:1fr} }
 
-    .post-img{
-      width:100%;
-      border-radius:14px;
-      border:1px solid var(--line);
-      display:block;
-      margin:0 0 10px 0;
-      background:#0e1510;
-    }
-    .img-note{font-size:12px;color:var(--muted);margin-top:6px}
-
-    .pill{
-      border:1px solid var(--line);
-      background:rgba(176,138,90,.14);
-      padding:8px 10px;
-      border-radius:999px;
-      color:var(--muted);
-      font-size:12px;
+    .toast{
+      position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+      background:rgba(18,27,18,.95);border:1px solid rgba(255,255,255,.10);
+      padding:10px 12px;border-radius:12px;
+      max-width:92vw;
+      display:none;
+      box-shadow:0 12px 28px rgba(0,0,0,.35);
     }
 
-    /* Post instructions box */
-    .info-box{
-      background: rgba(122,163,90,0.10);
-      border: 1px solid rgba(122,163,90,0.40);
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin: 10px 0 14px;
+    /* modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      display:none;align-items:center;justify-content:center;z-index:50;
+      padding:16px;
     }
-    .info-box h3{
-      margin: 0 0 6px;
-      font-size: 14px;
-      color: var(--text);
-      font-weight: 900;
-      letter-spacing: .2px;
-    }
-    .info-box ul{
-      margin: 0;
-      padding-left: 18px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .info-box li{
-      margin-bottom: 6px;
-      line-height: 1.35;
-    }
-    .info-box li:last-child{margin-bottom:0}
-
-    /* Locked/paid UI */
-    .locked{
-      border:1px dashed rgba(201,194,170,.35);
-      border-radius:14px;
-      padding:10px 12px;
-      background:rgba(11,18,13,.35);
-      margin-top:10px;
-    }
-    .locked .label{
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-    .locked .paidContent{
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid rgba(201,194,170,.18);
-    }
-    .locked .kv{
-      margin:0 0 8px 0;
-      font-size:13px;
-      color:var(--muted);
-      word-break:break-word;
-    }
-    .locked .kv b{color:var(--text)}
-    .btn-wide{width:100%}
-
-    /* ===== Members / Profile ===== */
-    .members-card{
-      border:1px solid var(--line);
-      border-radius:16px;
+    .modal{
+      width:min(720px, 100%);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
       background:var(--card);
-      padding:14px;
-      margin: 12px 0 14px;
+      box-shadow:0 20px 60px rgba(0,0,0,.5);
+      overflow:hidden;
     }
-    .members-head{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .members-title{
-      font-size:15px;
-      font-weight:900;
-      margin:0;
-    }
-    .members-sub{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .members-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .profile-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
-      margin-top:12px;
-    }
-    .profile-grid .full{grid-column:1 / -1}
+    .modal header{position:unset;background:transparent;border:none}
+    .modal .head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .modal .body{padding:14px}
+    .modal .foot{padding:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 
-    @media (max-width:900px){
-      .hero-collage{height:220px}
-      .collage-grid{grid-template-columns:repeat(4,1fr)}
-      .hero-text h1{font-size:30px}
-    }
-    @media (max-width:720px){
-      .fields{grid-template-columns:1fr}
-      .profile-grid{grid-template-columns:1fr}
-      .hero-collage{height:190px}
-      .hero-text h1{font-size:26px}
-      .hero-text p{font-size:13px}
-    }
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
+    .kpi{display:flex;gap:8px;flex-wrap:wrap}
+    .kpi .pill strong{color:var(--text)}
   </style>
 </head>
 <body>
- </script>
-
-  <section class="hero-collage" aria-label="Fishing photo collage">
-    <div class="collage-grid" aria-hidden="true">
-      <img src="FB_IMG_1770908475493.jpg" alt="">
-      <img src="FB_IMG_1770908500189.jpg" alt="">
-      <img src="FB_IMG_1770908712570.jpg" alt="">
-      <img src="FB_IMG_1770908903224.jpg" alt="">
-      <img src="FB_IMG_1770909246382.jpg" alt="">
-      <img src="IMG_20250412_132452552_BURST000_COVER~2.jpg" alt="">
-      <img src="IMG_20250607_174822729_HDR.jpg" alt="">
-      <img src="IMG_20250607_184941296_HDR.jpg" alt="">
-    </div>
-    <div class="hero-overlay"></div>
-    <div class="hero-text">
-      <h1>REAL FISHING SECRETS</h1>
-      <p>See the catch. Unlock the link + location.</p>
-      <div class="hero-badges">
-        <span class="hero-badge"> 🎣 Photo preview is free</span>
-        <span class="hero-badge">🔏 Sign-in to post</span>
-        <span class="hero-badge">💳🔓 Link + location are paid</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== MOVING BANNER (PASTE-IN PATCH) ===== -->
-  <div class="ticker" aria-label="Site announcements">
-    <div class="ticker__track">
-      <div class="ticker__item"><span class="ticker__dot"></span>See the catch first — unlock the exact spot only if you want it.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Post your fish, set your own price, and earn from your secret locations.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Real anglers!, Real catches!, Real locations!</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Pay once, unlock the link and secret fishing spot instantly.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Turn your best fishing days into extra cash!</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Members-only access to hidden waters and proven spots.</div>
-
-      <!-- duplicate for smooth loop -->
-      <div class="ticker__item"><span class="ticker__dot"></span>See the catch first — unlock the exact spot only if you want it.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Post your fish, set your own price, and earn from your secret locations.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Real anglers!, Real catches!, Real locations!.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Pay once, unlock the link and secret fishing spot instantly.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Turn your best fishing days into extra cash!</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Members-only access to hidden waters and proven spots.</div>
-    </div>
-  </div>
-
-  <header><h1>RealFishingSecrets — Live Feed</h1></header>
-
+<header>
   <div class="wrap">
-    <div id="status" class="status">Loading…</div>
-
-    <!-- MEMBERS / AUTH + PROFILE -->
-    <div class="members-card">
-      <div class="members-head">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">AP</div>
         <div>
-          <p class="members-title">Members</p>
-          <p id="memberStateText" class="members-sub">Sign in to create your profile and get your own page.</p>
-        </div>
-
-        <div class="members-actions">
-          <button id="loginBtn" class="small-btn" type="button">Sign in with Google</button>
-          <button id="logoutBtn" class="small-btn" type="button" style="display:none">Sign out</button>
-          <button id="viewMyPageBtn" class="small-btn" type="button" style="display:none">View my page</button>
+          <h1>AnglerPage</h1>
+          <small>Free fishing feed • ads later</small>
         </div>
       </div>
 
-      <div id="profileEditor" style="display:none">
-        <div class="profile-grid">
-          <div>
-            <label for="profileDisplayName">Display name</label>
-            <input id="profileDisplayName" placeholder="e.g., Russell B." />
-          </div>
-
-          <div>
-            <label for="profileHomeState">Home state</label>
-            <select id="profileHomeState">
-              <option value="">(optional)</option>
-              <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
-              <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
-              <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
-              <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
-              <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
-              <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
-              <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
-              <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
-              <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
-              <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
-              <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
-              <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
-              <option>Wisconsin</option><option>Wyoming</option>
-            </select>
-          </div>
-
-          <div class="full">
-            <label for="profilePhotoUrl">Profile photo URL (optional)</label>
-            <input id="profilePhotoUrl" placeholder="https://..." />
-            <div class="hint">Later we can let users upload this like posts.</div>
-          </div>
-
-          <div class="full">
-            <label for="profileBio">Bio (optional)</label>
-            <textarea id="profileBio" placeholder="What do you fish for? Favorite waters? Gear?"></textarea>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <button id="saveProfileBtn" type="button">Save profile</button>
-          <span id="profileSaveMsg" class="hint"></span>
-        </div>
+      <div class="nav">
+        <button id="tabFeed" class="btn small primary">Feed</button>
+        <button id="tabProfile" class="btn small">My Profile</button>
+        <button id="btnCreate" class="btn small primary">+ Post</button>
+        <button id="btnAuth" class="btn small">Sign in</button>
+        <button id="btnSignOut" class="btn small danger" style="display:none;">Sign out</button>
       </div>
     </div>
 
-    <div class="row" style="margin-top:8px">
-      <span class="pill">🆓 Free: title + state + photo</span>
-      <span class="pill">💳 Paid unlock: full link + secret location</span>
-      <span class="pill">🔏 Sign-in required to post</span>
+    <div class="row between" style="margin-top:10px;">
+      <div class="row" style="gap:10px;">
+        <span id="authState" class="pill">Not signed in</span>
+        <span class="pill">Rules: free content • no paywalls</span>
+      </div>
+      <div class="row" style="gap:10px;">
+        <input id="search" placeholder="Search captions, titles, creators…" style="width:min(360px,70vw)" />
+      </div>
     </div>
-
-    <div class="form">
-      <h2>Browse</h2>
-      <div class="fields">
-        <div class="full">
-          <label for="filterState">Filter by state (optional)</label>
-          <select id="filterState">
-            <option value="">All states</option>
-            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
-            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
-            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
-            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
-            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
-            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
-            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
-            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
-            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
-            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
-            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
-            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
-            <option>Wisconsin</option><option>Wyoming</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:10px">
-        <button id="reloadBtn" type="button">Reload posts</button>
-      </div>
-      <div class="hint">Tip: choose a state to filter, then tap “Reload posts”.</div>
-    </div>
-
-    <div class="form">
-      <h2>Post a Catch</h2>
-
-      <div class="info-box">
-        <h3>What buyers get</h3>
-        <ul>
-          <li><strong>Free preview:</strong> Title + state + photo only.</li>
-          <li><strong>Paid unlock:</strong> Full link + secret location.</li>
-          <li><strong>Important:</strong> Full link and secret location are saved in a private collection (not shown on the public feed).</li>
-        </ul>
-      </div>
-
-      <div class="fields">
-        <div>
-          <label for="title">Title</label>
-          <input id="title" placeholder="e.g., 5lb bass at dawn" />
-        </div>
-
-        <div>
-          <label for="state">State</label>
-          <select id="state">
-            <option value="">Select a state…</option>
-            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
-            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
-            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
-            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
-            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
-            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
-            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
-            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
-            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
-            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
-            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
-            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
-            <option>Wisconsin</option><option>Wyoming</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="price">Price (USD)</label>
-          <input id="price" type="number" step="0.01" min="0" placeholder="9.99" />
-        </div>
-
-        <div class="full">
-          <label for="paidLink">Full link (PAID — unlocked after purchase)</label>
-          <input id="paidLink" placeholder="https://..." />
-          <div class="hint">This will NOT be shown publicly. Buyers unlock it.</div>
-        </div>
-
-        <div class="full">
-          <label for="photo">Photo (uploaded to Cloudinary) — FREE teaser</label>
-          <input id="photo" type="file" accept="image/*" />
-          <div class="img-note">Recommended. Large files may take longer on mobile.</div>
-        </div>
-
-        <div class="full">
-          <label for="secretLocation">Secret location (PAID — stored privately)</label>
-          <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
-          <div class="hint">Saved privately. Only buyers should see it after payment verification.</div>
-          <div class="hint" style="margin-top:6px;">
-            Locked content must include a secondary photo or video showing a recognizable structure,
-            landmark, or environmental feature near the fishing location.
-          </div>
-        </div>
-
-        <div class="full" style="margin-top:6px;">
-          <label style="display:flex;gap:8px;align-items:flex-start;">
-            <input type="checkbox" id="honestyCheck" />
-            <span style="font-size:13px;color:var(--muted);">
-              I confirm this post contains truthful location information and includes
-              a recognizable structure or landmark in the locked proof photo or video.
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:10px">
-        <button id="postBtn" disabled>Sign in to post</button>
-      </div>
-      <div id="postHint" class="hint">You can browse without signing in. Sign in only if you want to post.</div>
-    </div>
-
-    <div id="grid" class="grid"></div>
   </div>
-<!-- ===== MOVING BANNER (PASTE-IN PATCH) ===== -->
-  <div class="ticker" aria-label="Site announcements">
-    <div class="ticker__track">
-      <div class="ticker__item"><span class="ticker__dot"></span>See the catch first — unlock the exact spot only if you want it.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Post your fish, set your own price, and earn from your secret locations.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Real anglers, real catches, real locations.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Pay once, unlock the link and secret fishing spot instantly.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Turn your best fishing days into extra cash.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Members-only access to hidden waters and proven spots.</div>
+</header>
 
-      <!-- duplicate for smooth loop -->
-      <div class="ticker__item"><span class="ticker__dot"></span>See the catch first — unlock the exact spot only if you want it.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Post your fish, set your own price, and earn from your secret locations.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Real anglers, real catches, real locations.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Pay once, unlock the link and secret fishing spot instantly.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Turn your best fishing days into extra cash.</div>
-      <div class="ticker__item"><span class="ticker__dot"></span>Members-only access to hidden waters and proven spots.</div>
+<main class="wrap">
+  <div class="grid">
+
+    <!-- FEED VIEW -->
+    <section id="viewFeed" class="card">
+      <div class="pad">
+        <div class="row between">
+          <div>
+            <div style="font-weight:900;font-size:16px;">Latest posts</div>
+            <div class="muted" style="font-size:12px;margin-top:2px;">
+              Everyone can view. Posting requires sign-in.
+            </div>
+          </div>
+          <div class="kpi">
+            <span class="pill">Posts: <strong id="kpiPosts">0</strong></span>
+            <span class="pill">Loaded: <strong id="kpiLoaded">0</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div id="feedList"></div>
+      <div class="pad" id="feedEmpty" style="display:none;">
+        <div class="muted">No posts yet. Be the first to post.</div>
+      </div>
+      <div class="pad">
+        <button id="btnLoadMore" class="btn">Load more</button>
+      </div>
+    </section>
+
+    <!-- PROFILE VIEW -->
+    <section id="viewProfile" class="card" style="display:none;">
+      <div class="pad">
+        <div class="row between">
+          <div class="row" style="gap:12px;">
+            <img id="meAvatar" class="avatar" alt="me" />
+            <div class="who">
+              <div id="meName" class="name">—</div>
+              <div id="meMeta" class="meta">Sign in to manage your profile</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="btnEditProfile" class="btn small">Edit profile</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="two">
+          <div>
+            <label>Bio</label>
+            <div id="meBio" class="muted">—</div>
+          </div>
+          <div>
+            <label>Location</label>
+            <div id="meLocation" class="muted">—</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row between">
+          <div style="font-weight:900;">My posts</div>
+          <span class="pill">Only you can delete your posts</span>
+        </div>
+      </div>
+      <div id="myPosts"></div>
+      <div class="pad" id="myPostsEmpty" style="display:none;">
+        <div class="muted">You haven’t posted anything yet.</div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- CREATE POST MODAL -->
+<div id="createBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="head">
+      <div style="font-weight:900;">Create a post</div>
+      <button class="btn small ghost" onclick="closeCreate()">✕</button>
     </div>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      addDoc,
-      setDoc,
-      getDoc,
-      doc,
-      serverTimestamp,
-      query,
-      orderBy,
-      where
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    <div class="body">
+      <div class="two">
+        <div>
+          <label>Title</label>
+          <input id="postTitle" maxlength="120" placeholder="Quick title (optional)" />
+        </div>
+        <div>
+          <label>Media type</label>
+          <select id="postType">
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+      </div>
 
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      signInWithRedirect,
-      getRedirectResult,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+      <label>Media URL (Cloudinary / direct URL)</label>
+      <input id="postMediaUrl" maxlength="800" placeholder="https://..." />
+      <div class="hint">Tip: For Cloudinary, paste the secure URL to the image/video.</div>
 
-    const statusEl = document.getElementById("status");
-    const gridEl = document.getElementById("grid");
-    const filterStateEl = document.getElementById("filterState");
+      <label>Caption</label>
+      <textarea id="postCaption" maxlength="1000" placeholder="Tell the story…"></textarea>
 
-    const titleEl = document.getElementById("title");
-    const stateEl = document.getElementById("state");
-    const priceEl = document.getElementById("price");
-    const paidLinkEl = document.getElementById("paidLink");
-    const secretLocationEl = document.getElementById("secretLocation");
-    const photoEl = document.getElementById("photo");
-    const honestyCheckEl = document.getElementById("honestyCheck");
+      <div class="two">
+        <div>
+          <label>Tags (comma-separated)</label>
+          <input id="postTags" maxlength="200" placeholder="bass, kayak, river" />
+        </div>
+        <div>
+          <label>State (optional)</label>
+          <input id="postState" maxlength="30" placeholder="WI" />
+        </div>
+      </div>
 
-    const postBtn = document.getElementById("postBtn");
-    const reloadBtn = document.getElementById("reloadBtn");
-    const postHintEl = document.getElementById("postHint");
+      <div class="hint">
+        This is a free feed. No prices, no unlocks, no payment fields.
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeCreate()">Cancel</button>
+      <button id="btnPublish" class="btn primary" onclick="publishPost()">Publish</button>
+    </div>
+  </div>
+</div>
 
-    // Members/Profile elements
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const viewMyPageBtn = document.getElementById("viewMyPageBtn");
-    const memberStateText = document.getElementById("memberStateText");
+<!-- EDIT PROFILE MODAL -->
+<div id="profileBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="head">
+      <div style="font-weight:900;">Edit profile</div>
+      <button class="btn small ghost" onclick="closeProfile()">✕</button>
+    </div>
+    <div class="body">
+      <label>Display name</label>
+      <input id="profileName" maxlength="60" placeholder="Your name" />
 
-    const profileEditor = document.getElementById("profileEditor");
-    const profileDisplayName = document.getElementById("profileDisplayName");
-    const profileHomeState = document.getElementById("profileHomeState");
-    const profilePhotoUrl = document.getElementById("profilePhotoUrl");
-    const profileBio = document.getElementById("profileBio");
-    const saveProfileBtn = document.getElementById("saveProfileBtn");
-    const profileSaveMsg = document.getElementById("profileSaveMsg");
+      <label>Avatar URL (optional)</label>
+      <input id="profileAvatar" maxlength="800" placeholder="https://..." />
 
-    window.addEventListener("unhandledrejection", (e) => {
-      statusEl.textContent = "❌ Unhandled promise:\n" + (e.reason?.message || e.reason || e);
-    });
-    window.addEventListener("error", (e) => {
-      statusEl.textContent = "❌ JS error:\n" + (e.message || e);
-    });
+      <div class="two">
+        <div>
+          <label>Location (optional)</label>
+          <input id="profileLocation" maxlength="60" placeholder="Madison, WI" />
+        </div>
+        <div>
+          <label>Favorite species (optional)</label>
+          <input id="profileSpecies" maxlength="60" placeholder="Walleye" />
+        </div>
+      </div>
 
-    const CLOUDINARY_CLOUD_NAME = "dhuakqubc";
-    const CLOUDINARY_UPLOAD_PRESET = "emiktt1b";
-    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+      <label>Bio (optional)</label>
+      <textarea id="profileBio" maxlength="300" placeholder="A short bio…"></textarea>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
-      authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
-      projectId: "bestfishingsecrets-932cf",
-      storageBucket: "bestfishingsecrets-932cf.firebasestorage.app",
-      messagingSenderId: "387299114354",
-      appId: "1:387299114354:web:cbadda074f9dd7083ef1eb",
-      measurementId: "G-Z8L28MXNEG"
-    };
+      <div class="hint">
+        Profiles are public. Keep it simple.
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeProfile()">Cancel</button>
+      <button id="btnSaveProfile" class="btn primary" onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+<div id="toast" class="toast"></div>
 
-    let currentUser = null;
+<!-- Firebase (modular) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged,
+    GoogleAuthProvider, signInWithPopup, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, setDoc, updateDoc,
+    collection, addDoc, serverTimestamp,
+    query, orderBy, limit, startAfter, getDocs, where,
+    deleteDoc, increment
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+  // ====== 1) PASTE YOUR FIREBASE CONFIG HERE ======
+  // Get it from Firebase Console -> Project settings -> Your apps -> Config
+  const firebaseConfig = {
+    apiKey: "PASTE",
+    authDomain: "PASTE",
+    projectId: "PASTE",
+    storageBucket: "PASTE",
+    messagingSenderId: "PASTE",
+    appId: "PASTE"
+  };
 
-    function isValidUrl(s){
-      if (!s) return false;
-      try { new URL(s); return true; } catch { return false; }
-    }
+  // ====== init ======
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    // ===== PROFILE CRUD =====
-    async function loadMyProfile(uid){
-      const ref = doc(db, "profiles", uid);
-      const snap = await getDoc(ref);
+  // ====== UI refs ======
+  const tabFeed = document.getElementById('tabFeed');
+  const tabProfile = document.getElementById('tabProfile');
+  const viewFeed = document.getElementById('viewFeed');
+  const viewProfile = document.getElementById('viewProfile');
+  const btnAuth = document.getElementById('btnAuth');
+  const btnSignOut = document.getElementById('btnSignOut');
+  const btnCreate = document.getElementById('btnCreate');
+  const authState = document.getElementById('authState');
+  const feedList = document.getElementById('feedList');
+  const feedEmpty = document.getElementById('feedEmpty');
+  const btnLoadMore = document.getElementById('btnLoadMore');
+  const searchBox = document.getElementById('search');
+  const kpiPosts = document.getElementById('kpiPosts');
+  const kpiLoaded = document.getElementById('kpiLoaded');
 
-      if (snap.exists()){
-        const p = snap.data() || {};
-        profileDisplayName.value = p.displayName || "";
-        profileHomeState.value = p.homeState || "";
-        profilePhotoUrl.value = p.photoUrl || "";
-        profileBio.value = p.bio || "";
-        profileSaveMsg.textContent = "Loaded your profile.";
-        profileSaveMsg.classList.remove("ok");
-      } else {
-        profileDisplayName.value = currentUser?.displayName || "";
-        profileHomeState.value = "";
-        profilePhotoUrl.value = currentUser?.photoURL || "";
-        profileBio.value = "";
-        profileSaveMsg.textContent = "No profile yet — fill this out and tap Save profile.";
-        profileSaveMsg.classList.remove("ok");
-      }
-    }
+  const meAvatar = document.getElementById('meAvatar');
+  const meName = document.getElementById('meName');
+  const meMeta = document.getElementById('meMeta');
+  const meBio = document.getElementById('meBio');
+  const meLocation = document.getElementById('meLocation');
+  const myPosts = document.getElementById('myPosts');
+  const myPostsEmpty = document.getElementById('myPostsEmpty');
+  const btnEditProfile = document.getElementById('btnEditProfile');
 
-    async function saveMyProfile(){
-      if (!currentUser) return;
+  // modals
+  const createBackdrop = document.getElementById('createBackdrop');
+  const profileBackdrop = document.getElementById('profileBackdrop');
 
-      saveProfileBtn.disabled = true;
-      profileSaveMsg.textContent = "Saving…";
-      profileSaveMsg.classList.remove("ok");
+  // form
+  const postTitle = document.getElementById('postTitle');
+  const postType = document.getElementById('postType');
+  const postMediaUrl = document.getElementById('postMediaUrl');
+  const postCaption = document.getElementById('postCaption');
+  const postTags = document.getElementById('postTags');
+  const postState = document.getElementById('postState');
+  const btnPublish = document.getElementById('btnPublish');
 
-      try{
-        const uid = currentUser.uid;
-        const ref = doc(db, "profiles", uid);
-        const existing = await getDoc(ref);
+  const profileName = document.getElementById('profileName');
+  const profileAvatar = document.getElementById('profileAvatar');
+  const profileLocation = document.getElementById('profileLocation');
+  const profileSpecies = document.getElementById('profileSpecies');
+  const profileBio = document.getElementById('profileBio');
+  const btnSaveProfile = document.getElementById('btnSaveProfile');
 
-        const payload = {
-          uid,
-          displayName: profileDisplayName.value.trim() || null,
-          homeState: profileHomeState.value.trim() || null,
-          photoUrl: profilePhotoUrl.value.trim() || null,
-          bio: profileBio.value.trim() || null,
-          createdAt: existing.exists() ? existing.data().createdAt : serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
+  // ====== state ======
+  let me = null; // firebase user
+  let lastDoc = null;
+  let loading = false;
+  const PAGE_SIZE = 8;
+  let loadedCount = 0;
+  let cachedPosts = []; // for client-side search filter
 
-        // Rules require full doc shape; merge false keeps keys exact.
-        await setDoc(ref, payload, { merge: false });
-
-        profileSaveMsg.textContent = "✅ Profile saved.";
-        profileSaveMsg.classList.add("ok");
-      } catch(e){
-        profileSaveMsg.textContent = "❌ Save failed: " + (e?.message || String(e));
-      } finally {
-        saveProfileBtn.disabled = false;
-      }
-    }
-
-    saveProfileBtn.addEventListener("click", saveMyProfile);
-
-    viewMyPageBtn.addEventListener("click", () => {
-      if (!currentUser) return;
-      // You'll add member.html next (I can provide it again if you need)
-      window.location.href = `member.html?uid=${encodeURIComponent(currentUser.uid)}`;
-    });
-
-    // ===== AUTH =====
+  // ====== helpers ======
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(()=> t.style.display='none', 2200);
+  }
+  function fmtTime(ts){
+    if(!ts) return '—';
     try{
-      await getRedirectResult(auth);
-    }catch(err){
-      statusEl.textContent = "⚠️ Redirect sign-in error:\n" + (err?.message || String(err));
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString();
+    }catch(e){ return '—'; }
+  }
+  function sanitizeTags(raw){
+    return raw.split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, 12);
+  }
+  function isHttpUrl(s){
+    return /^https?:\/\/.+/i.test(s || "");
+  }
+  function esc(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  // ====== routing ======
+  function showFeed(){
+    viewFeed.style.display = '';
+    viewProfile.style.display = 'none';
+    tabFeed.classList.add('primary');
+    tabProfile.classList.remove('primary');
+  }
+  function showProfile(){
+    viewFeed.style.display = 'none';
+    viewProfile.style.display = '';
+    tabProfile.classList.add('primary');
+    tabFeed.classList.remove('primary');
+    refreshMyPosts();
+    refreshProfileUI();
+  }
+  tabFeed.onclick = showFeed;
+  tabProfile.onclick = showProfile;
+
+  // ====== auth ======
+  btnAuth.onclick = async () => {
+    try{
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Sign-in failed");
     }
+  };
+  btnSignOut.onclick = async () => {
+    try{ await signOut(auth); } catch(e){ toast("Sign-out failed"); }
+  };
 
-    loginBtn.addEventListener("click", async () => {
-      statusEl.textContent = "Signing in…";
-      try {
-        await signInWithPopup(auth, provider);
-        statusEl.textContent = "✅ Signed in.";
-      } catch (e) {
-        const msg = (e?.message || "").toLowerCase();
-        const code = (e?.code || "").toLowerCase();
-        const looksLikePopupBlocked =
-          code.includes("popup") || msg.includes("popup") || msg.includes("blocked") || msg.includes("closed");
+  // ====== modals (exposed globally for buttons) ======
+  window.closeCreate = () => { createBackdrop.style.display = 'none'; };
+  window.openCreate = () => { createBackdrop.style.display = 'flex'; };
+  window.closeProfile = () => { profileBackdrop.style.display = 'none'; };
+  window.openProfile = () => { profileBackdrop.style.display = 'flex'; };
 
-        if (looksLikePopupBlocked) {
-          statusEl.textContent = "Popup blocked. Switching to redirect sign-in…";
-          await signInWithRedirect(auth, provider);
-          return;
-        }
+  btnCreate.onclick = () => {
+    if(!me){ toast("Sign in to post"); return; }
+    postTitle.value = "";
+    postType.value = "image";
+    postMediaUrl.value = "";
+    postCaption.value = "";
+    postTags.value = "";
+    postState.value = "";
+    window.openCreate();
+  };
 
-        statusEl.textContent = "❌ Sign-in failed:\n" + (e?.message || String(e));
-      }
-    });
+  btnEditProfile.onclick = async () => {
+    if(!me){ toast("Sign in first"); return; }
+    const uref = doc(db, "users", me.uid);
+    const snap = await getDoc(uref);
+    const data = snap.exists() ? snap.data() : {};
+    profileName.value = data.displayName || me.displayName || "";
+    profileAvatar.value = data.photoURL || me.photoURL || "";
+    profileLocation.value = data.location || "";
+    profileSpecies.value = data.favoriteSpecies || "";
+    profileBio.value = data.bio || "";
+    window.openProfile();
+  };
 
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        statusEl.textContent = "Signed out.";
-      } catch (e) {
-        statusEl.textContent = "❌ Sign-out failed:\n" + (e?.message || String(e));
-      }
-    });
+  createBackdrop.addEventListener('click', (e)=>{ if(e.target === createBackdrop) window.closeCreate(); });
+  profileBackdrop.addEventListener('click', (e)=>{ if(e.target === profileBackdrop) window.closeProfile(); });
 
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
+  // ====== data: profiles ======
+  async function ensureUserDoc(user){
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    if(!snap.exists()){
+      await setDoc(ref, {
+        uid: user.uid,
+        displayName: user.displayName || "Angler",
+        photoURL: user.photoURL || "",
+        bio: "",
+        location: "",
+        favoriteSpecies: "",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }else{
+      // keep updatedAt fresh, and pull displayName/photo if missing
+      const d = snap.data() || {};
+      const patch = { updatedAt: serverTimestamp() };
+      if(!d.displayName && user.displayName) patch.displayName = user.displayName;
+      if(!d.photoURL && user.photoURL) patch.photoURL = user.photoURL;
+      await updateDoc(ref, patch);
+    }
+  }
 
-      if (user) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        viewMyPageBtn.style.display = "inline-block";
-        memberStateText.textContent = `Signed in as ${user.displayName || user.email || "User"} — edit your profile below.`;
+  window.saveProfile = async () => {
+    if(!me){ toast("Sign in first"); return; }
 
-        profileEditor.style.display = "block";
-        await loadMyProfile(user.uid);
+    const dn = (profileName.value || "").trim().slice(0,60);
+    const av = (profileAvatar.value || "").trim().slice(0,800);
+    const loc = (profileLocation.value || "").trim().slice(0,60);
+    const sp = (profileSpecies.value || "").trim().slice(0,60);
+    const bio = (profileBio.value || "").trim().slice(0,300);
 
-        postBtn.disabled = false;
-        postBtn.textContent = "Post catch";
-        postHintEl.textContent = "✅ You’re signed in — you can post now.";
-        postHintEl.classList.add("ok");
-      } else {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        viewMyPageBtn.style.display = "none";
-        memberStateText.textContent = "Sign in to create your profile and get your own page.";
+    if(av && !isHttpUrl(av)){ toast("Avatar URL must start with http(s)://"); return; }
 
-        profileEditor.style.display = "none";
-        profileSaveMsg.textContent = "";
-        profileSaveMsg.classList.remove("ok");
+    btnSaveProfile.disabled = true;
+    try{
+      await updateDoc(doc(db, "users", me.uid), {
+        displayName: dn || (me.displayName || "Angler"),
+        photoURL: av || "",
+        location: loc || "",
+        favoriteSpecies: sp || "",
+        bio: bio || "",
+        updatedAt: serverTimestamp()
+      });
+      toast("Profile saved");
+      window.closeProfile();
+      await refreshProfileUI(true);
+      await refreshMyPosts();
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Save failed");
+    }finally{
+      btnSaveProfile.disabled = false;
+    }
+  };
 
-        postBtn.disabled = true;
-        postBtn.textContent = "Sign in to post";
-        postHintEl.textContent = "You can browse without signing in. Sign in only if you want to post.";
-        postHintEl.classList.remove("ok");
-      }
-    });
+  async function refreshProfileUI(force=false){
+    if(!me){
+      meAvatar.src = "";
+      meName.textContent = "—";
+      meMeta.textContent = "Sign in to manage your profile";
+      meBio.textContent = "—";
+      meLocation.textContent = "—";
+      return;
+    }
+    const ref = doc(db,"users",me.uid);
+    const snap = await getDoc(ref);
+    const d = snap.exists()? snap.data() : {};
+    const dn = d.displayName || me.displayName || "Angler";
+    const photo = d.photoURL || me.photoURL || "";
+    meAvatar.src = photo || "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='100%' height='100%' fill='#1a241a'/><text x='50%' y='55%' font-size='28' fill='#c9c2aa' text-anchor='middle' font-family='Arial'>${(dn[0]||'A').toUpperCase()}</text></svg>`);
+    meName.textContent = dn;
+    meMeta.textContent = me.email || "";
+    meBio.textContent = d.bio ? d.bio : "—";
+    meLocation.textContent = d.location ? d.location : "—";
+  }
 
-    // ===== FEED / POSTS =====
-    function cardHTML(p){
-      const title = p.title ?? "Untitled catch";
-      const state = p.state ?? "Unknown";
-      const priceRaw = p.price;
-      const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
-      const imageUrl = p.imageUrl ?? "";
-      const hasPaid = !!p.hasPaid;
+  // ====== data: posts ======
+  function renderPostCard(p, opts={mine:false}){
+    const media = p.mediaUrl ? (p.type === 'video'
+      ? `<video src="${esc(p.mediaUrl)}" controls playsinline></video>`
+      : `<img src="${esc(p.mediaUrl)}" alt="post" loading="lazy" />`)
+      : "";
 
-      // Optional: show author name if available
-      const author = p.userName || "Member";
+    const tags = (p.tags || []).map(t => `<span class="pill">#${esc(t)}</span>`).join(" ");
+    const mineBtns = opts.mine ? `
+      <button class="btn small danger" data-del="${esc(p.id)}">Delete</button>
+    ` : "";
 
-      return `
-        <div class="card" data-postid="${escapeHtml(p.id)}">
-          ${imageUrl ? `<img class="post-img" src="${escapeHtml(imageUrl)}" alt="Catch photo" loading="lazy" />` : ""}
-          <p class="title">${escapeHtml(title)}</p>
-          <p class="meta">By: <b>${escapeHtml(author)}</b></p>
-          <p class="meta">State: <b>${escapeHtml(state)}</b></p>
-          <p class="meta"><span class="price">$${escapeHtml(price)}</span></p>
+    const liked = p.__likedByMe ? "on" : "";
+    const likeCount = p.likeCount || 0;
 
-          ${hasPaid ? `
-            <div class="locked">
-              <div class="label">Paid content</div>
-              <button class="btn-wide unlockBtn" type="button" data-postid="${escapeHtml(p.id)}">
-                Unlock link + location
-              </button>
-
-              <div class="paidContent" style="display:none">
-                <p class="kv"><b>Full link:</b> <a class="paidLink" href="#" target="_blank" rel="noopener">Open</a></p>
-                <p class="kv"><b>Secret location:</b> <span class="secretLoc"></span></p>
-              </div>
-
-              <div class="hint" style="margin-top:8px;">
-                If you can’t unlock yet, payments/verification may not be enabled on this build.
+    return `
+      <article class="card" style="margin:12px 16px;">
+        <div class="pad">
+          <div class="row between">
+            <div class="row" style="gap:12px;">
+              <img class="avatar" src="${esc(p.authorPhoto || "") || "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='100%' height='100%' fill='#1a241a'/><text x='50%' y='55%' font-size='28' fill='#c9c2aa' text-anchor='middle' font-family='Arial'>A</text></svg>`)}" alt="avatar" />
+              <div class="who">
+                <div class="name">${esc(p.authorName || "Angler")}</div>
+                <div class="meta">${esc(fmtTime(p.createdAt))}${p.state ? " • "+esc(p.state) : ""}</div>
               </div>
             </div>
-          ` : `
-            <div class="hint">No paid link/location attached to this post.</div>
-          `}
+            <div class="row" style="gap:8px;">
+              ${mineBtns}
+            </div>
+          </div>
+
+          ${p.title ? `<div style="font-weight:900;margin-top:10px;">${esc(p.title)}</div>` : ""}
+
+          ${p.caption ? `<div class="muted" style="margin-top:8px;white-space:pre-wrap;">${esc(p.caption)}</div>` : ""}
+
+          ${tags ? `<div class="row" style="margin-top:10px;gap:8px;">${tags}</div>` : ""}
+
+          <div class="divider"></div>
+
+          <div class="actions">
+            <div class="action ${liked}" data-like="${esc(p.id)}">👍 Like <small>${likeCount}</small></div>
+            <div class="action" title="Coming soon">💬 Comment <small>soon</small></div>
+            <div class="action" data-copy="${esc(p.id)}">🔗 Share</div>
+          </div>
         </div>
-      `;
-    }
 
-    async function uploadToCloudinary(file){
-      const maxMB = 12;
-      const sizeMB = file.size / (1024*1024);
-      if (sizeMB > maxMB) throw new Error(`Image too large (${sizeMB.toFixed(1)}MB). Choose under ${maxMB}MB.`);
-      if (!file.type.startsWith("image/")) throw new Error("Selected file is not an image.");
+        ${media ? `<div class="post-media">${media}</div>` : ""}
+      </article>
+    `;
+  }
 
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  async function fetchPage(reset=false){
+    if(loading) return;
+    loading = true;
+    btnLoadMore.disabled = true;
 
-      const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: "POST", body: fd });
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`Cloudinary upload failed (${res.status}). ${text}`);
+    try{
+      if(reset){
+        lastDoc = null;
+        loadedCount = 0;
+        cachedPosts = [];
+        feedList.innerHTML = "";
       }
-      return await res.json();
+
+      const base = collection(db, "posts");
+      let qy = query(base, orderBy("createdAt","desc"), limit(PAGE_SIZE));
+      if(lastDoc) qy = query(base, orderBy("createdAt","desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+
+      const snap = await getDocs(qy);
+      if(snap.empty && loadedCount === 0){
+        feedEmpty.style.display = "";
+        kpiLoaded.textContent = "0";
+        return;
+      }
+      feedEmpty.style.display = "none";
+
+      lastDoc = snap.docs[snap.docs.length-1] || lastDoc;
+
+      const items = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      cachedPosts.push(...items);
+      loadedCount += items.length;
+
+      kpiLoaded.textContent = String(loadedCount);
+
+      // render (without like-state; that can be added later if you want per-user like tracking)
+      feedList.insertAdjacentHTML("beforeend", items.map(p => renderPostCard(p)).join(""));
+      wirePostActions(feedList);
+
+      // load post count KPI (approx) - cheap approach: keep a counter doc in production; for now we just show loaded
+      kpiPosts.textContent = String(Math.max(Number(kpiPosts.textContent||0), loadedCount));
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Failed to load feed");
+    }finally{
+      loading = false;
+      btnLoadMore.disabled = false;
+    }
+  }
+
+  btnLoadMore.onclick = () => fetchPage(false);
+
+  // ====== publish ======
+  window.publishPost = async () => {
+    if(!me){ toast("Sign in to post"); return; }
+
+    const title = (postTitle.value || "").trim().slice(0,120);
+    const type = postType.value === "video" ? "video" : "image";
+    const mediaUrl = (postMediaUrl.value || "").trim().slice(0,800);
+    const caption = (postCaption.value || "").trim().slice(0,1000);
+    const tags = sanitizeTags(postTags.value || "");
+    const state = (postState.value || "").trim().slice(0,30);
+
+    if(mediaUrl && !isHttpUrl(mediaUrl)){ toast("Media URL must start with http(s)://"); return; }
+    if(!caption && !mediaUrl && !title){
+      toast("Add at least a title, caption, or media URL");
+      return;
     }
 
-    async function loadPosts(){
-      gridEl.innerHTML = "";
-      statusEl.textContent = "Loading posts…";
+    btnPublish.disabled = true;
+    try{
+      // pull latest profile for authorName/photo (denormalized for fast feed rendering)
+      const uref = doc(db, "users", me.uid);
+      const usnap = await getDoc(uref);
+      const u = usnap.exists() ? usnap.data() : {};
 
-      const chosenState = filterStateEl.value.trim();
+      await addDoc(collection(db,"posts"), {
+        ownerId: me.uid,
+        authorName: u.displayName || me.displayName || "Angler",
+        authorPhoto: u.photoURL || me.photoURL || "",
+        title,
+        caption,
+        type,
+        mediaUrl,
+        tags,
+        state,
+        likeCount: 0,
+        createdAt: serverTimestamp()
+      });
 
-      try{
-        let snap;
+      toast("Posted!");
+      window.closeCreate();
+      // refresh feed to show newest
+      await fetchPage(true);
+      showFeed();
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Publish failed");
+    }finally{
+      btnPublish.disabled = false;
+    }
+  };
+
+  // ====== profile posts ======
+  async function refreshMyPosts(){
+    if(!me){
+      myPosts.innerHTML = "";
+      myPostsEmpty.style.display = "";
+      return;
+    }
+    myPosts.innerHTML = "";
+    myPostsEmpty.style.display = "none";
+    try{
+      const qy = query(
+        collection(db,"posts"),
+        where("ownerId","==",me.uid),
+        orderBy("createdAt","desc"),
+        limit(30)
+      );
+      const snap = await getDocs(qy);
+      if(snap.empty){
+        myPostsEmpty.style.display = "";
+        return;
+      }
+      const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      myPosts.innerHTML = items.map(p => renderPostCard(p, {mine:true})).join("");
+      wirePostActions(myPosts, {mine:true});
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Failed to load your posts");
+    }
+  }
+
+  // ====== actions: like/share/delete ======
+  function wirePostActions(root, opts={mine:false}){
+    // share
+    root.querySelectorAll('[data-copy]').forEach(el=>{
+      el.onclick = async () => {
+        const id = el.getAttribute('data-copy');
+        const url = location.origin + location.pathname + "#post=" + id;
         try{
-          const base = collection(db, "posts");
-          const q = chosenState
-            ? query(base, where("state", "==", chosenState), orderBy("createdAt", "desc"))
-            : query(base, orderBy("createdAt", "desc"));
-          snap = await getDocs(q);
+          await navigator.clipboard.writeText(url);
+          toast("Link copied");
         }catch(e){
-          // fallback without orderBy if index/rules cause trouble
-          snap = await getDocs(collection(db, "posts"));
+          toast("Copy failed");
         }
-
-        if (!snap || snap.empty){
-          statusEl.textContent = chosenState
-            ? `No posts found for ${chosenState} yet.`
-            : "No posts yet. Sign in if you want to post the first one.";
-          return;
-        }
-
-        let posts = [];
-        snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
-
-        if (chosenState) posts = posts.filter(p => (p.state || "").trim() === chosenState);
-
-        if (!posts.length) {
-          statusEl.textContent = `No posts found for ${chosenState} yet.`;
-          return;
-        }
-
-        gridEl.innerHTML = posts.map(cardHTML).join("");
-
-        statusEl.textContent = chosenState
-          ? `Loaded ${posts.length} post(s) for ${chosenState}.`
-          : `Loaded ${posts.length} post(s).`;
-      }catch(err){
-        statusEl.textContent =
-          "❌ Error loading posts.\n\nMost common causes:\n- Firestore Rules blocking reads\n- Firestore not created\n- Network/adblock\n\nDetails:\n" + (err?.message || String(err));
-      }
-    }
-
-    function showPaidInCard(postId, paidLink, secretLocation){
-      const card = gridEl.querySelector(`.card[data-postid="${CSS.escape(postId)}"]`);
-      if (!card) return;
-
-      const paid = card.querySelector(".paidContent");
-      const a = card.querySelector(".paidLink");
-      const loc = card.querySelector(".secretLoc");
-      const btn = card.querySelector(".unlockBtn");
-
-      a.href = paidLink;
-      a.textContent = paidLink;
-      loc.textContent = secretLocation;
-
-      paid.style.display = "block";
-      if (btn) btn.style.display = "none";
-    }
-
-    async function unlockPaid(postId){
-      statusEl.textContent = "Unlocking…";
-
-      try{
-        const secretRef = doc(db, "postSecrets", postId);
-        const snap = await getDoc(secretRef);
-
-        if (!snap.exists()){
-          statusEl.textContent = "❌ Locked content not found for this post.";
-          return;
-        }
-
-        const data = snap.data() || {};
-        const paidLink = (data.paidLink || "").trim();
-        const secretLocation = (data.secretLocation || "").trim();
-
-        if (!paidLink || !secretLocation){
-          statusEl.textContent = "❌ Locked content is incomplete (missing link or location).";
-          return;
-        }
-
-        showPaidInCard(postId, paidLink, secretLocation);
-        statusEl.textContent = "✅ Unlocked (demo). If this should be paid, add Stripe verification + rules gating.";
-      }catch(err){
-        statusEl.textContent =
-          "🔒 Still locked.\n\nThis is expected until you enable payment verification + Firestore Rules.\n\nDetails:\n" +
-          (err?.message || String(err));
-      }
-    }
-
-    gridEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".unlockBtn");
-      if (!btn) return;
-      const postId = btn.getAttribute("data-postid");
-      if (!postId) return;
-      unlockPaid(postId);
+      };
     });
 
-    async function postCatch(){
-      if (!currentUser) {
-        statusEl.textContent = "❌ Please sign in first to post.";
-        return;
-      }
-
-      const title = titleEl.value.trim();
-      const state = stateEl.value.trim();
-      const priceStr = priceEl.value.trim();
-      const paidLink = paidLinkEl.value.trim();
-      const secretLocation = secretLocationEl.value.trim();
-
-      if (!title) { statusEl.textContent = "❌ Please enter a title."; return; }
-      if (!state) { statusEl.textContent = "❌ Please select a state."; return; }
-      if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
-      if (!isValidUrl(paidLink)) { statusEl.textContent = "❌ Please enter a valid Full link (https://...)."; return; }
-      if (!secretLocation) { statusEl.textContent = "❌ Please enter a secret location (paid content)."; return; }
-
-      if (!honestyCheckEl.checked) {
-        statusEl.textContent = "❌ You must confirm the honesty agreement before posting.";
-        return;
-      }
-
-      postBtn.disabled = true;
-
-      let imageUrl = null;
-      let imagePublicId = null;
-
-      try{
-        const file = photoEl.files && photoEl.files[0] ? photoEl.files[0] : null;
-        if (file) {
-          statusEl.textContent = "Uploading photo…";
-          const uploaded = await uploadToCloudinary(file);
-          imageUrl = uploaded.secure_url || uploaded.url || null;
-          imagePublicId = uploaded.public_id || null;
-          if (!imageUrl) throw new Error("Upload succeeded but no image URL was returned.");
-        } else {
-          statusEl.textContent = "❌ Please upload a photo (this is the free teaser).";
-          return;
+    // delete (owner only; rules enforce it too)
+    root.querySelectorAll('[data-del]').forEach(el=>{
+      el.onclick = async () => {
+        if(!me){ toast("Sign in"); return; }
+        const id = el.getAttribute('data-del');
+        if(!confirm("Delete this post?")) return;
+        try{
+          await deleteDoc(doc(db,"posts",id));
+          toast("Deleted");
+          await refreshMyPosts();
+          await fetchPage(true);
+        }catch(e){
+          console.error(e);
+          toast(e?.message || "Delete failed");
         }
+      };
+    });
 
-        statusEl.textContent = "Posting…";
+    // like (simple counter; later we can add per-user like tracking to prevent spam)
+    root.querySelectorAll('[data-like]').forEach(el=>{
+      el.onclick = async () => {
+        if(!me){ toast("Sign in to like"); return; }
+        const id = el.getAttribute('data-like');
+        try{
+          // Simple approach: increment counter only.
+          // If you want "toggle like" per user, we’ll add a /posts/{id}/likes/{uid} subcollection.
+          await updateDoc(doc(db,"posts",id), { likeCount: increment(1) });
+          toast("Liked");
+          await fetchPage(true);
+        }catch(e){
+          console.error(e);
+          toast(e?.message || "Like failed");
+        }
+      };
+    });
+  }
 
-        const postRef = await addDoc(collection(db, "posts"), {
-          title,
-          state,
-          price: Number(priceStr),
+  // ====== search filter (client-side on what’s loaded) ======
+  function applySearch(){
+    const q = (searchBox.value || "").trim().toLowerCase();
+    if(!q){
+      // re-render from cachedPosts but only those already rendered? easiest: reload feed.
+      fetchPage(true);
+      return;
+    }
+    const filtered = cachedPosts.filter(p => {
+      const hay = [
+        p.title, p.caption, p.authorName, (p.tags||[]).join(" "), p.state
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+    feedList.innerHTML = filtered.map(p => renderPostCard(p)).join("");
+    wirePostActions(feedList);
+    feedEmpty.style.display = filtered.length ? "none" : "";
+    kpiLoaded.textContent = String(filtered.length);
+  }
+  searchBox.addEventListener('input', () => {
+    // don’t spam reload; filter in place
+    const q = (searchBox.value || "").trim();
+    if(q.length === 0) fetchPage(true);
+    else applySearch();
+  });
 
-          imageUrl: imageUrl,
-          imagePublicId: imagePublicId,
+  // ====== auth state handler ======
+  onAuthStateChanged(auth, async (user) => {
+    me = user || null;
 
-          hasPaid: true,
-
-          userId: currentUser.uid,
-          userName: currentUser.displayName || null,
-          userEmail: currentUser.email || null,
-          createdAt: serverTimestamp()
-        });
-
-        await setDoc(doc(db, "postSecrets", postRef.id), {
-          postId: postRef.id,
-          ownerId: currentUser.uid,
-          paidLink: paidLink,
-          secretLocation: secretLocation,
-          createdAt: serverTimestamp()
-        });
-
-        titleEl.value = "";
-        stateEl.value = "";
-        priceEl.value = "";
-        paidLinkEl.value = "";
-        secretLocationEl.value = "";
-        photoEl.value = "";
-        honestyCheckEl.checked = false;
-
-        statusEl.textContent = "✅ Posted!";
-        await loadPosts();
-      }catch(err){
-        statusEl.textContent = "❌ Post failed.\n\nDetails:\n" + (err?.message || String(err));
-      }finally{
-        postBtn.disabled = !currentUser;
-      }
+    if(!me){
+      authState.textContent = "Not signed in";
+      btnAuth.style.display = "";
+      btnSignOut.style.display = "none";
+      btnCreate.disabled = true;
+      toast("Signed out");
+      await refreshProfileUI();
+      await refreshMyPosts();
+      return;
     }
 
-    postBtn.addEventListener("click", postCatch);
-    reloadBtn.addEventListener("click", loadPosts);
-    filterStateEl.addEventListener("change", loadPosts);
+    btnAuth.style.display = "none";
+    btnSignOut.style.display = "";
+    btnCreate.disabled = false;
 
-    await loadPosts();
-  </script>
+    authState.textContent = `Signed in: ${me.displayName || me.email || "User"}`;
+    toast("Signed in");
+
+    try{
+      await ensureUserDoc(me);
+    }catch(e){
+      console.error(e);
+      toast("Profile init failed (check rules)");
+    }
+
+    await refreshProfileUI();
+    await refreshMyPosts();
+  });
+
+  // ====== initial load ======
+  showFeed();
+  fetchPage(true);
+</script>
 </body>
 </html>
