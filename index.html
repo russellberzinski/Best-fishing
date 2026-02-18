@@ -34,9 +34,7 @@
       background:rgba(0,0,0,.18);
       color:var(--text);
       padding:10px 12px;border-radius:12px;
-      cursor:pointer;
-      transition:.15s;
-      font-weight:650;
+      cursor:pointer; transition:.15s; font-weight:650;
     }
     .btn:hover{filter:brightness(1.08)}
     .btn.primary{background:rgba(122,163,90,.22);border-color:rgba(122,163,90,.42)}
@@ -48,10 +46,8 @@
       padding:6px 10px;border-radius:999px;
       border:1px solid rgba(255,255,255,.10);
       background:rgba(0,0,0,.18);
-      color:var(--muted);
-      font-size:12px;
+      color:var(--muted); font-size:12px;
     }
-
     .grid{display:grid;grid-template-columns: 1fr; gap:12px; padding:16px}
     .card{
       background:var(--card);
@@ -65,7 +61,6 @@
     .between{justify-content:space-between}
     .muted{color:var(--muted)}
     .divider{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
-
     .avatar{
       width:40px;height:40px;border-radius:14px;flex:0 0 auto;
       border:1px solid rgba(255,255,255,.10);
@@ -74,73 +69,75 @@
     }
     .who .name{font-weight:800}
     .who .meta{font-size:12px;color:var(--muted);margin-top:2px}
-
     .post-media{background:#0a0f0b}
     .post-media img, .post-media video{
       width:100%; display:block; max-height:520px; object-fit:cover;
     }
-
     .actions{display:flex;gap:8px;flex-wrap:wrap}
     .action{
       display:inline-flex;align-items:center;gap:8px;
       padding:8px 10px;border-radius:12px;
       border:1px solid rgba(255,255,255,.10);
       background:rgba(0,0,0,.18);
-      cursor:pointer;
-      user-select:none;
-      font-weight:700;
+      cursor:pointer; user-select:none; font-weight:700;
     }
     .action:hover{filter:brightness(1.08)}
-    .action.on{background:rgba(122,163,90,.22);border-color:rgba(122,163,90,.42)}
     .action small{color:var(--muted);font-weight:700}
-
     input, textarea, select{
-      width:100%;
-      padding:11px 12px;
-      border-radius:12px;
+      width:100%; padding:11px 12px; border-radius:12px;
       border:1px solid rgba(255,255,255,.10);
       background:rgba(0,0,0,.22);
-      color:var(--text);
-      outline:none;
+      color:var(--text); outline:none;
     }
     textarea{min-height:92px;resize:vertical}
     label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
     .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     @media (max-width:720px){ .two{grid-template-columns:1fr} }
-
     .toast{
       position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
       background:rgba(18,27,18,.95);border:1px solid rgba(255,255,255,.10);
       padding:10px 12px;border-radius:12px;
-      max-width:92vw;
-      display:none;
+      max-width:92vw; display:none;
       box-shadow:0 12px 28px rgba(0,0,0,.35);
+      z-index:99;
     }
-
-    /* modal */
     .modal-backdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.55);
       display:none;align-items:center;justify-content:center;z-index:50;
       padding:16px;
     }
     .modal{
-      width:min(720px, 100%);
+      width:min(760px, 100%);
       border-radius:18px;
       border:1px solid rgba(255,255,255,.10);
       background:var(--card);
       box-shadow:0 20px 60px rgba(0,0,0,.5);
       overflow:hidden;
     }
-    .modal header{position:unset;background:transparent;border:none}
     .modal .head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-bottom:1px solid rgba(255,255,255,.08)}
     .modal .body{padding:14px}
     .modal .foot{padding:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-
     .hint{font-size:12px;color:var(--muted);margin-top:8px}
     .kpi{display:flex;gap:8px;flex-wrap:wrap}
     .kpi .pill strong{color:var(--text)}
+    .progress{
+      display:none;
+      width:100%;
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .progress > div{
+      height:100%;
+      width:0%;
+      background:rgba(122,163,90,.6);
+      transition:width .15s ease;
+    }
   </style>
 </head>
+
 <body>
 <header>
   <div class="wrap">
@@ -149,7 +146,7 @@
         <div class="logo">AP</div>
         <div>
           <h1>AnglerPage</h1>
-          <small>Free fishing feed • ads later</small>
+          <small>Free fishing feed • Cloudinary media</small>
         </div>
       </div>
 
@@ -165,10 +162,10 @@
     <div class="row between" style="margin-top:10px;">
       <div class="row" style="gap:10px;">
         <span id="authState" class="pill">Not signed in</span>
-        <span class="pill">Rules: free content • no paywalls</span>
+        <span class="pill">Collections: <strong>profiles</strong>, <strong>posts</strong></span>
       </div>
       <div class="row" style="gap:10px;">
-        <input id="search" placeholder="Search captions, titles, creators…" style="width:min(360px,70vw)" />
+        <input id="search" placeholder="Search titles, captions, creators…" style="width:min(360px,70vw)" />
       </div>
     </div>
   </div>
@@ -177,18 +174,15 @@
 <main class="wrap">
   <div class="grid">
 
-    <!-- FEED VIEW -->
+    <!-- FEED -->
     <section id="viewFeed" class="card">
       <div class="pad">
         <div class="row between">
           <div>
             <div style="font-weight:900;font-size:16px;">Latest posts</div>
-            <div class="muted" style="font-size:12px;margin-top:2px;">
-              Everyone can view. Posting requires sign-in.
-            </div>
+            <div class="muted" style="font-size:12px;margin-top:2px;">Everyone can view. Posting requires sign-in.</div>
           </div>
           <div class="kpi">
-            <span class="pill">Posts: <strong id="kpiPosts">0</strong></span>
             <span class="pill">Loaded: <strong id="kpiLoaded">0</strong></span>
           </div>
         </div>
@@ -203,7 +197,7 @@
       </div>
     </section>
 
-    <!-- PROFILE VIEW -->
+    <!-- PROFILE -->
     <section id="viewProfile" class="card" style="display:none;">
       <div class="pad">
         <div class="row between">
@@ -255,6 +249,7 @@
       <div style="font-weight:900;">Create a post</div>
       <button class="btn small ghost" onclick="closeCreate()">✕</button>
     </div>
+
     <div class="body">
       <div class="two">
         <div>
@@ -270,9 +265,22 @@
         </div>
       </div>
 
-      <label>Media URL (Cloudinary / direct URL)</label>
+      <label>Upload media (Cloudinary)</label>
+      <div class="two">
+        <div>
+          <input id="postFile" type="file" accept="image/*,video/*" />
+          <div class="hint">Pick a file and upload; we’ll fill the Media URL for you.</div>
+        </div>
+        <div>
+          <button id="btnUpload" class="btn" type="button" onclick="uploadToCloudinary()">Upload</button>
+          <div class="progress" id="upProg"><div id="upProgBar"></div></div>
+          <div class="hint" id="upHint"></div>
+        </div>
+      </div>
+
+      <label>Media URL (auto-filled after upload, or paste your own)</label>
       <input id="postMediaUrl" maxlength="800" placeholder="https://..." />
-      <div class="hint">Tip: For Cloudinary, paste the secure URL to the image/video.</div>
+      <div class="hint">Rules allow http(s) URLs. Cloudinary “secure_url” works best.</div>
 
       <label>Caption</label>
       <textarea id="postCaption" maxlength="1000" placeholder="Tell the story…"></textarea>
@@ -288,10 +296,9 @@
         </div>
       </div>
 
-      <div class="hint">
-        This is a free feed. No prices, no unlocks, no payment fields.
-      </div>
+      <div class="hint">Free feed: no prices, no unlocks.</div>
     </div>
+
     <div class="foot">
       <button class="btn" onclick="closeCreate()">Cancel</button>
       <button id="btnPublish" class="btn primary" onclick="publishPost()">Publish</button>
@@ -327,9 +334,7 @@
       <label>Bio (optional)</label>
       <textarea id="profileBio" maxlength="300" placeholder="A short bio…"></textarea>
 
-      <div class="hint">
-        Profiles are public. Keep it simple.
-      </div>
+      <div class="hint">Profiles are public. Keep it simple.</div>
     </div>
     <div class="foot">
       <button class="btn" onclick="closeProfile()">Cancel</button>
@@ -340,22 +345,24 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- Firebase (modular) -->
 <script type="module">
+  // Firebase (modular)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getAuth, onAuthStateChanged,
-    GoogleAuthProvider, signInWithPopup, signOut
+    GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+    signOut
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, setDoc, updateDoc,
     collection, addDoc, serverTimestamp,
     query, orderBy, limit, startAfter, getDocs, where,
-    deleteDoc, increment
+    deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // ====== 1) PASTE YOUR FIREBASE CONFIG HERE ======
-  // Get it from Firebase Console -> Project settings -> Your apps -> Config
+  // =======================
+  // 1) FIREBASE CONFIG
+  // =======================
   const firebaseConfig = {
     apiKey: "PASTE",
     authDomain: "PASTE",
@@ -365,12 +372,25 @@
     appId: "PASTE"
   };
 
-  // ====== init ======
+  // =======================
+  // 2) CLOUDINARY CONFIG
+  // =======================
+  // Keep these the same as before (replace with your real values)
+  const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUD_NAME";
+  const CLOUDINARY_UPLOAD_PRESET = "YOUR_UNSIGNED_UPLOAD_PRESET";
+  // Optional: folder in your Cloudinary media library
+  const CLOUDINARY_FOLDER = "anglerpage";
+
+  // Collections (match common rules we built earlier)
+  const COL_PROFILES = "profiles";
+  const COL_POSTS = "posts";
+
+  // init
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ====== UI refs ======
+  // UI refs
   const tabFeed = document.getElementById('tabFeed');
   const tabProfile = document.getElementById('tabProfile');
   const viewFeed = document.getElementById('viewFeed');
@@ -383,7 +403,6 @@
   const feedEmpty = document.getElementById('feedEmpty');
   const btnLoadMore = document.getElementById('btnLoadMore');
   const searchBox = document.getElementById('search');
-  const kpiPosts = document.getElementById('kpiPosts');
   const kpiLoaded = document.getElementById('kpiLoaded');
 
   const meAvatar = document.getElementById('meAvatar');
@@ -395,13 +414,13 @@
   const myPostsEmpty = document.getElementById('myPostsEmpty');
   const btnEditProfile = document.getElementById('btnEditProfile');
 
-  // modals
   const createBackdrop = document.getElementById('createBackdrop');
   const profileBackdrop = document.getElementById('profileBackdrop');
 
   // form
   const postTitle = document.getElementById('postTitle');
   const postType = document.getElementById('postType');
+  const postFile = document.getElementById('postFile');
   const postMediaUrl = document.getElementById('postMediaUrl');
   const postCaption = document.getElementById('postCaption');
   const postTags = document.getElementById('postTags');
@@ -415,21 +434,26 @@
   const profileBio = document.getElementById('profileBio');
   const btnSaveProfile = document.getElementById('btnSaveProfile');
 
-  // ====== state ======
-  let me = null; // firebase user
+  // upload UI
+  const upProg = document.getElementById('upProg');
+  const upProgBar = document.getElementById('upProgBar');
+  const upHint = document.getElementById('upHint');
+  const btnUpload = document.getElementById('btnUpload');
+
+  // state
+  let me = null;
   let lastDoc = null;
   let loading = false;
   const PAGE_SIZE = 8;
-  let loadedCount = 0;
-  let cachedPosts = []; // for client-side search filter
+  let cachedPosts = [];
 
-  // ====== helpers ======
+  // helpers
   function toast(msg){
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.style.display = 'block';
     clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(()=> t.style.display='none', 2200);
+    window.__toastTimer = setTimeout(()=> t.style.display='none', 2400);
   }
   function fmtTime(ts){
     if(!ts) return '—';
@@ -439,14 +463,12 @@
     }catch(e){ return '—'; }
   }
   function sanitizeTags(raw){
-    return raw.split(',')
+    return (raw || "").split(',')
       .map(s => s.trim().toLowerCase())
       .filter(Boolean)
       .slice(0, 12);
   }
-  function isHttpUrl(s){
-    return /^https?:\/\/.+/i.test(s || "");
-  }
+  function isHttpUrl(s){ return /^https?:\/\/.+/i.test(s || ""); }
   function esc(s){
     return (s ?? "").toString()
       .replaceAll("&","&amp;")
@@ -455,8 +477,17 @@
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#39;");
   }
+  function placeholderAvatar(letter){
+    const L = (letter || "A").toUpperCase();
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'>
+        <rect width='100%' height='100%' fill='#1a241a'/>
+        <text x='50%' y='55%' font-size='28' fill='#c9c2aa' text-anchor='middle' font-family='Arial'>${L}</text>
+      </svg>`
+    );
+  }
 
-  // ====== routing ======
+  // routing
   function showFeed(){
     viewFeed.style.display = '';
     viewProfile.style.display = 'none';
@@ -468,118 +499,149 @@
     viewProfile.style.display = '';
     tabProfile.classList.add('primary');
     tabFeed.classList.remove('primary');
-    refreshMyPosts();
     refreshProfileUI();
+    refreshMyPosts();
   }
   tabFeed.onclick = showFeed;
   tabProfile.onclick = showProfile;
 
-  // ====== auth ======
-  btnAuth.onclick = async () => {
-    try{
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Sign-in failed");
-    }
-  };
-  btnSignOut.onclick = async () => {
-    try{ await signOut(auth); } catch(e){ toast("Sign-out failed"); }
-  };
-
-  // ====== modals (exposed globally for buttons) ======
+  // modals
   window.closeCreate = () => { createBackdrop.style.display = 'none'; };
-  window.openCreate = () => { createBackdrop.style.display = 'flex'; };
+  window.openCreate  = () => { createBackdrop.style.display = 'flex'; };
   window.closeProfile = () => { profileBackdrop.style.display = 'none'; };
-  window.openProfile = () => { profileBackdrop.style.display = 'flex'; };
+  window.openProfile  = () => { profileBackdrop.style.display = 'flex'; };
+
+  createBackdrop.addEventListener('click', (e)=>{ if(e.target === createBackdrop) window.closeCreate(); });
+  profileBackdrop.addEventListener('click', (e)=>{ if(e.target === profileBackdrop) window.closeProfile(); });
 
   btnCreate.onclick = () => {
     if(!me){ toast("Sign in to post"); return; }
     postTitle.value = "";
     postType.value = "image";
+    postFile.value = "";
     postMediaUrl.value = "";
     postCaption.value = "";
     postTags.value = "";
     postState.value = "";
+    upHint.textContent = "";
+    upProg.style.display = "none";
+    upProgBar.style.width = "0%";
     window.openCreate();
   };
 
   btnEditProfile.onclick = async () => {
     if(!me){ toast("Sign in first"); return; }
-    const uref = doc(db, "users", me.uid);
-    const snap = await getDoc(uref);
-    const data = snap.exists() ? snap.data() : {};
-    profileName.value = data.displayName || me.displayName || "";
-    profileAvatar.value = data.photoURL || me.photoURL || "";
-    profileLocation.value = data.location || "";
-    profileSpecies.value = data.favoriteSpecies || "";
-    profileBio.value = data.bio || "";
+    const ref = doc(db, COL_PROFILES, me.uid);
+    const snap = await getDoc(ref);
+    const d = snap.exists() ? snap.data() : {};
+
+    profileName.value = d.displayName || me.displayName || "";
+    profileAvatar.value = d.photoURL || me.photoURL || "";
+    profileLocation.value = d.location || "";
+    profileSpecies.value = d.favoriteSpecies || "";
+    profileBio.value = d.bio || "";
     window.openProfile();
   };
 
-  createBackdrop.addEventListener('click', (e)=>{ if(e.target === createBackdrop) window.closeCreate(); });
-  profileBackdrop.addEventListener('click', (e)=>{ if(e.target === profileBackdrop) window.closeProfile(); });
+  // auth
+  btnAuth.onclick = async () => {
+    const provider = new GoogleAuthProvider();
+    try{
+      await signInWithPopup(auth, provider);
+    }catch(e){
+      // Popup often fails on mobile in-app browsers; redirect is the reliable fallback
+      if((e?.code || "").includes("popup") || (e?.message || "").toLowerCase().includes("popup")){
+        try{
+          await signInWithRedirect(auth, provider);
+        }catch(e2){
+          console.error(e2);
+          toast(e2?.message || "Sign-in failed");
+        }
+      }else{
+        console.error(e);
+        toast(e?.message || "Sign-in failed");
+      }
+    }
+  };
 
-  // ====== data: profiles ======
-  async function ensureUserDoc(user){
-    const ref = doc(db, "users", user.uid);
+  btnSignOut.onclick = async () => {
+    try{ await signOut(auth); } catch(e){ toast("Sign-out failed"); }
+  };
+
+  // Handle redirect result (important on mobile)
+  try{
+    await getRedirectResult(auth);
+  }catch(e){
+    // ignore unless you want to show it
+  }
+
+  // ========= PROFILES (THIS IS WHERE THE OLD ERROR USUALLY WAS) =========
+  async function ensureProfileDoc(user){
+    // Use setDoc merge so it works whether doc exists or not.
+    const ref = doc(db, COL_PROFILES, user.uid);
+    const base = {
+      uid: user.uid,
+      displayName: user.displayName || "Angler",
+      photoURL: user.photoURL || "",
+      bio: "",
+      location: "",
+      favoriteSpecies: "",
+      updatedAt: serverTimestamp()
+    };
+    // createdAt only if doc doesn't exist (avoid rule issues if disallowed to add new fields later)
     const snap = await getDoc(ref);
     if(!snap.exists()){
-      await setDoc(ref, {
-        uid: user.uid,
-        displayName: user.displayName || "Angler",
-        photoURL: user.photoURL || "",
-        bio: "",
-        location: "",
-        favoriteSpecies: "",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+      await setDoc(ref, { ...base, createdAt: serverTimestamp() }, { merge: true });
     }else{
-      // keep updatedAt fresh, and pull displayName/photo if missing
+      // don’t blank out user’s fields
       const d = snap.data() || {};
-      const patch = { updatedAt: serverTimestamp() };
-      if(!d.displayName && user.displayName) patch.displayName = user.displayName;
-      if(!d.photoURL && user.photoURL) patch.photoURL = user.photoURL;
-      await updateDoc(ref, patch);
+      await setDoc(ref, {
+        ...base,
+        displayName: d.displayName || base.displayName,
+        photoURL: d.photoURL || base.photoURL,
+        bio: d.bio || "",
+        location: d.location || "",
+        favoriteSpecies: d.favoriteSpecies || ""
+      }, { merge: true });
     }
   }
 
   window.saveProfile = async () => {
     if(!me){ toast("Sign in first"); return; }
 
-    const dn = (profileName.value || "").trim().slice(0,60);
-    const av = (profileAvatar.value || "").trim().slice(0,800);
+    const dn  = (profileName.value || "").trim().slice(0,60);
+    const av  = (profileAvatar.value || "").trim().slice(0,800);
     const loc = (profileLocation.value || "").trim().slice(0,60);
-    const sp = (profileSpecies.value || "").trim().slice(0,60);
+    const sp  = (profileSpecies.value || "").trim().slice(0,60);
     const bio = (profileBio.value || "").trim().slice(0,300);
 
     if(av && !isHttpUrl(av)){ toast("Avatar URL must start with http(s)://"); return; }
 
     btnSaveProfile.disabled = true;
     try{
-      await updateDoc(doc(db, "users", me.uid), {
+      await setDoc(doc(db, COL_PROFILES, me.uid), {
+        uid: me.uid,
         displayName: dn || (me.displayName || "Angler"),
         photoURL: av || "",
         location: loc || "",
         favoriteSpecies: sp || "",
         bio: bio || "",
         updatedAt: serverTimestamp()
-      });
+      }, { merge: true });
+
       toast("Profile saved");
       window.closeProfile();
-      await refreshProfileUI(true);
+      await refreshProfileUI();
       await refreshMyPosts();
     }catch(e){
       console.error(e);
-      toast(e?.message || "Save failed");
+      toast(e?.message || "Save failed (check rules)");
     }finally{
       btnSaveProfile.disabled = false;
     }
   };
 
-  async function refreshProfileUI(force=false){
+  async function refreshProfileUI(){
     if(!me){
       meAvatar.src = "";
       meName.textContent = "—";
@@ -588,19 +650,20 @@
       meLocation.textContent = "—";
       return;
     }
-    const ref = doc(db,"users",me.uid);
+    const ref = doc(db, COL_PROFILES, me.uid);
     const snap = await getDoc(ref);
-    const d = snap.exists()? snap.data() : {};
+    const d = snap.exists() ? snap.data() : {};
+
     const dn = d.displayName || me.displayName || "Angler";
     const photo = d.photoURL || me.photoURL || "";
-    meAvatar.src = photo || "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='100%' height='100%' fill='#1a241a'/><text x='50%' y='55%' font-size='28' fill='#c9c2aa' text-anchor='middle' font-family='Arial'>${(dn[0]||'A').toUpperCase()}</text></svg>`);
+    meAvatar.src = photo || placeholderAvatar((dn[0] || "A"));
     meName.textContent = dn;
     meMeta.textContent = me.email || "";
     meBio.textContent = d.bio ? d.bio : "—";
     meLocation.textContent = d.location ? d.location : "—";
   }
 
-  // ====== data: posts ======
+  // ========= POSTS =========
   function renderPostCard(p, opts={mine:false}){
     const media = p.mediaUrl ? (p.type === 'video'
       ? `<video src="${esc(p.mediaUrl)}" controls playsinline></video>`
@@ -608,183 +671,41 @@
       : "";
 
     const tags = (p.tags || []).map(t => `<span class="pill">#${esc(t)}</span>`).join(" ");
-    const mineBtns = opts.mine ? `
-      <button class="btn small danger" data-del="${esc(p.id)}">Delete</button>
-    ` : "";
+    const mineBtns = opts.mine ? `<button class="btn small danger" data-del="${esc(p.id)}">Delete</button>` : "";
 
-    const liked = p.__likedByMe ? "on" : "";
-    const likeCount = p.likeCount || 0;
+    const authorLetter = (p.authorName || "A")[0] || "A";
+    const authorPhoto = (p.authorPhoto && isHttpUrl(p.authorPhoto)) ? p.authorPhoto : placeholderAvatar(authorLetter);
 
     return `
       <article class="card" style="margin:12px 16px;">
         <div class="pad">
           <div class="row between">
             <div class="row" style="gap:12px;">
-              <img class="avatar" src="${esc(p.authorPhoto || "") || "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='100%' height='100%' fill='#1a241a'/><text x='50%' y='55%' font-size='28' fill='#c9c2aa' text-anchor='middle' font-family='Arial'>A</text></svg>`)}" alt="avatar" />
+              <img class="avatar" src="${esc(authorPhoto)}" alt="avatar" />
               <div class="who">
                 <div class="name">${esc(p.authorName || "Angler")}</div>
                 <div class="meta">${esc(fmtTime(p.createdAt))}${p.state ? " • "+esc(p.state) : ""}</div>
               </div>
             </div>
-            <div class="row" style="gap:8px;">
-              ${mineBtns}
-            </div>
+            <div class="row" style="gap:8px;">${mineBtns}</div>
           </div>
 
           ${p.title ? `<div style="font-weight:900;margin-top:10px;">${esc(p.title)}</div>` : ""}
-
           ${p.caption ? `<div class="muted" style="margin-top:8px;white-space:pre-wrap;">${esc(p.caption)}</div>` : ""}
-
           ${tags ? `<div class="row" style="margin-top:10px;gap:8px;">${tags}</div>` : ""}
 
           <div class="divider"></div>
 
           <div class="actions">
-            <div class="action ${liked}" data-like="${esc(p.id)}">👍 Like <small>${likeCount}</small></div>
-            <div class="action" title="Coming soon">💬 Comment <small>soon</small></div>
             <div class="action" data-copy="${esc(p.id)}">🔗 Share</div>
           </div>
         </div>
-
         ${media ? `<div class="post-media">${media}</div>` : ""}
       </article>
     `;
   }
 
-  async function fetchPage(reset=false){
-    if(loading) return;
-    loading = true;
-    btnLoadMore.disabled = true;
-
-    try{
-      if(reset){
-        lastDoc = null;
-        loadedCount = 0;
-        cachedPosts = [];
-        feedList.innerHTML = "";
-      }
-
-      const base = collection(db, "posts");
-      let qy = query(base, orderBy("createdAt","desc"), limit(PAGE_SIZE));
-      if(lastDoc) qy = query(base, orderBy("createdAt","desc"), startAfter(lastDoc), limit(PAGE_SIZE));
-
-      const snap = await getDocs(qy);
-      if(snap.empty && loadedCount === 0){
-        feedEmpty.style.display = "";
-        kpiLoaded.textContent = "0";
-        return;
-      }
-      feedEmpty.style.display = "none";
-
-      lastDoc = snap.docs[snap.docs.length-1] || lastDoc;
-
-      const items = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      cachedPosts.push(...items);
-      loadedCount += items.length;
-
-      kpiLoaded.textContent = String(loadedCount);
-
-      // render (without like-state; that can be added later if you want per-user like tracking)
-      feedList.insertAdjacentHTML("beforeend", items.map(p => renderPostCard(p)).join(""));
-      wirePostActions(feedList);
-
-      // load post count KPI (approx) - cheap approach: keep a counter doc in production; for now we just show loaded
-      kpiPosts.textContent = String(Math.max(Number(kpiPosts.textContent||0), loadedCount));
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Failed to load feed");
-    }finally{
-      loading = false;
-      btnLoadMore.disabled = false;
-    }
-  }
-
-  btnLoadMore.onclick = () => fetchPage(false);
-
-  // ====== publish ======
-  window.publishPost = async () => {
-    if(!me){ toast("Sign in to post"); return; }
-
-    const title = (postTitle.value || "").trim().slice(0,120);
-    const type = postType.value === "video" ? "video" : "image";
-    const mediaUrl = (postMediaUrl.value || "").trim().slice(0,800);
-    const caption = (postCaption.value || "").trim().slice(0,1000);
-    const tags = sanitizeTags(postTags.value || "");
-    const state = (postState.value || "").trim().slice(0,30);
-
-    if(mediaUrl && !isHttpUrl(mediaUrl)){ toast("Media URL must start with http(s)://"); return; }
-    if(!caption && !mediaUrl && !title){
-      toast("Add at least a title, caption, or media URL");
-      return;
-    }
-
-    btnPublish.disabled = true;
-    try{
-      // pull latest profile for authorName/photo (denormalized for fast feed rendering)
-      const uref = doc(db, "users", me.uid);
-      const usnap = await getDoc(uref);
-      const u = usnap.exists() ? usnap.data() : {};
-
-      await addDoc(collection(db,"posts"), {
-        ownerId: me.uid,
-        authorName: u.displayName || me.displayName || "Angler",
-        authorPhoto: u.photoURL || me.photoURL || "",
-        title,
-        caption,
-        type,
-        mediaUrl,
-        tags,
-        state,
-        likeCount: 0,
-        createdAt: serverTimestamp()
-      });
-
-      toast("Posted!");
-      window.closeCreate();
-      // refresh feed to show newest
-      await fetchPage(true);
-      showFeed();
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Publish failed");
-    }finally{
-      btnPublish.disabled = false;
-    }
-  };
-
-  // ====== profile posts ======
-  async function refreshMyPosts(){
-    if(!me){
-      myPosts.innerHTML = "";
-      myPostsEmpty.style.display = "";
-      return;
-    }
-    myPosts.innerHTML = "";
-    myPostsEmpty.style.display = "none";
-    try{
-      const qy = query(
-        collection(db,"posts"),
-        where("ownerId","==",me.uid),
-        orderBy("createdAt","desc"),
-        limit(30)
-      );
-      const snap = await getDocs(qy);
-      if(snap.empty){
-        myPostsEmpty.style.display = "";
-        return;
-      }
-      const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
-      myPosts.innerHTML = items.map(p => renderPostCard(p, {mine:true})).join("");
-      wirePostActions(myPosts, {mine:true});
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Failed to load your posts");
-    }
-  }
-
-  // ====== actions: like/share/delete ======
-  function wirePostActions(root, opts={mine:false}){
-    // share
+  function wirePostActions(root){
     root.querySelectorAll('[data-copy]').forEach(el=>{
       el.onclick = async () => {
         const id = el.getAttribute('data-copy');
@@ -798,70 +719,233 @@
       };
     });
 
-    // delete (owner only; rules enforce it too)
     root.querySelectorAll('[data-del]').forEach(el=>{
       el.onclick = async () => {
         if(!me){ toast("Sign in"); return; }
         const id = el.getAttribute('data-del');
         if(!confirm("Delete this post?")) return;
         try{
-          await deleteDoc(doc(db,"posts",id));
+          await deleteDoc(doc(db, COL_POSTS, id));
           toast("Deleted");
           await refreshMyPosts();
           await fetchPage(true);
         }catch(e){
           console.error(e);
-          toast(e?.message || "Delete failed");
-        }
-      };
-    });
-
-    // like (simple counter; later we can add per-user like tracking to prevent spam)
-    root.querySelectorAll('[data-like]').forEach(el=>{
-      el.onclick = async () => {
-        if(!me){ toast("Sign in to like"); return; }
-        const id = el.getAttribute('data-like');
-        try{
-          // Simple approach: increment counter only.
-          // If you want "toggle like" per user, we’ll add a /posts/{id}/likes/{uid} subcollection.
-          await updateDoc(doc(db,"posts",id), { likeCount: increment(1) });
-          toast("Liked");
-          await fetchPage(true);
-        }catch(e){
-          console.error(e);
-          toast(e?.message || "Like failed");
+          toast(e?.message || "Delete failed (check rules)");
         }
       };
     });
   }
 
-  // ====== search filter (client-side on what’s loaded) ======
+  async function fetchPage(reset=false){
+    if(loading) return;
+    loading = true;
+    btnLoadMore.disabled = true;
+
+    try{
+      if(reset){
+        lastDoc = null;
+        cachedPosts = [];
+        feedList.innerHTML = "";
+        kpiLoaded.textContent = "0";
+      }
+
+      const base = collection(db, COL_POSTS);
+      let qy = query(base, orderBy("createdAt","desc"), limit(PAGE_SIZE));
+      if(lastDoc) qy = query(base, orderBy("createdAt","desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+
+      const snap = await getDocs(qy);
+      if(snap.empty && cachedPosts.length === 0){
+        feedEmpty.style.display = "";
+        return;
+      }
+      feedEmpty.style.display = "none";
+
+      lastDoc = snap.docs[snap.docs.length-1] || lastDoc;
+      const items = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      cachedPosts.push(...items);
+
+      kpiLoaded.textContent = String(cachedPosts.length);
+
+      feedList.insertAdjacentHTML("beforeend", items.map(p => renderPostCard(p)).join(""));
+      wirePostActions(feedList);
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Failed to load feed");
+    }finally{
+      loading = false;
+      btnLoadMore.disabled = false;
+    }
+  }
+
+  btnLoadMore.onclick = () => fetchPage(false);
+
+  // client-side search on cached posts
   function applySearch(){
     const q = (searchBox.value || "").trim().toLowerCase();
     if(!q){
-      // re-render from cachedPosts but only those already rendered? easiest: reload feed.
-      fetchPage(true);
+      feedList.innerHTML = cachedPosts.map(p => renderPostCard(p)).join("");
+      wirePostActions(feedList);
+      feedEmpty.style.display = cachedPosts.length ? "none" : "";
+      kpiLoaded.textContent = String(cachedPosts.length);
       return;
     }
+
     const filtered = cachedPosts.filter(p => {
       const hay = [
         p.title, p.caption, p.authorName, (p.tags||[]).join(" "), p.state
       ].join(" ").toLowerCase();
       return hay.includes(q);
     });
+
     feedList.innerHTML = filtered.map(p => renderPostCard(p)).join("");
     wirePostActions(feedList);
     feedEmpty.style.display = filtered.length ? "none" : "";
     kpiLoaded.textContent = String(filtered.length);
   }
-  searchBox.addEventListener('input', () => {
-    // don’t spam reload; filter in place
-    const q = (searchBox.value || "").trim();
-    if(q.length === 0) fetchPage(true);
-    else applySearch();
-  });
 
-  // ====== auth state handler ======
+  searchBox.addEventListener('input', applySearch);
+
+  // publish post
+  window.publishPost = async () => {
+    if(!me){ toast("Sign in to post"); return; }
+
+    const title = (postTitle.value || "").trim().slice(0,120);
+    const type = (postType.value === "video") ? "video" : "image";
+    const mediaUrl = (postMediaUrl.value || "").trim().slice(0,800);
+    const caption = (postCaption.value || "").trim().slice(0,1000);
+    const tags = sanitizeTags(postTags.value || "");
+    const state = (postState.value || "").trim().slice(0,30);
+
+    if(mediaUrl && !isHttpUrl(mediaUrl)){ toast("Media URL must start with http(s)://"); return; }
+    if(!caption && !mediaUrl && !title){ toast("Add at least a title, caption, or media URL"); return; }
+
+    btnPublish.disabled = true;
+    try{
+      // denormalize profile for feed (common + fast)
+      const pref = doc(db, COL_PROFILES, me.uid);
+      const psnap = await getDoc(pref);
+      const p = psnap.exists() ? psnap.data() : {};
+
+      await addDoc(collection(db, COL_POSTS), {
+        ownerId: me.uid,
+        authorName: p.displayName || me.displayName || "Angler",
+        authorPhoto: p.photoURL || me.photoURL || "",
+        title,
+        caption,
+        type,
+        mediaUrl,
+        tags,
+        state,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      toast("Posted!");
+      window.closeCreate();
+      await fetchPage(true);
+      showFeed();
+      await refreshMyPosts();
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Publish failed (check rules)");
+    }finally{
+      btnPublish.disabled = false;
+    }
+  };
+
+  async function refreshMyPosts(){
+    if(!me){
+      myPosts.innerHTML = "";
+      myPostsEmpty.style.display = "";
+      return;
+    }
+
+    myPosts.innerHTML = "";
+    myPostsEmpty.style.display = "none";
+
+    try{
+      const qy = query(
+        collection(db, COL_POSTS),
+        where("ownerId","==",me.uid),
+        orderBy("createdAt","desc"),
+        limit(30)
+      );
+
+      const snap = await getDocs(qy);
+      if(snap.empty){
+        myPostsEmpty.style.display = "";
+        return;
+      }
+
+      const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      myPosts.innerHTML = items.map(p => renderPostCard(p, {mine:true})).join("");
+      wirePostActions(myPosts);
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Failed to load your posts");
+    }
+  }
+
+  // ========= CLOUDINARY UPLOAD =========
+  window.uploadToCloudinary = async () => {
+    if(!me){ toast("Sign in first"); return; }
+    const file = postFile.files && postFile.files[0];
+    if(!file){ toast("Choose a file first"); return; }
+    if(!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME"){
+      toast("Set your Cloudinary cloud name/preset in the code first");
+      return;
+    }
+
+    // Cloudinary unsigned upload endpoint
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(CLOUDINARY_CLOUD_NAME)}/auto/upload`;
+
+    btnUpload.disabled = true;
+    upHint.textContent = "Uploading…";
+    upProg.style.display = "block";
+    upProgBar.style.width = "8%";
+
+    try{
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      if(CLOUDINARY_FOLDER) fd.append("folder", CLOUDINARY_FOLDER);
+
+      // Progress: fetch doesn’t expose upload progress reliably; we simulate steps
+      const timer = setInterval(()=>{
+        const cur = parseFloat(upProgBar.style.width) || 0;
+        if(cur < 92) upProgBar.style.width = (cur + 6) + "%";
+      }, 180);
+
+      const res = await fetch(endpoint, { method:"POST", body: fd });
+      clearInterval(timer);
+
+      const json = await res.json();
+      if(!res.ok){
+        console.error(json);
+        throw new Error(json?.error?.message || "Cloudinary upload failed");
+      }
+
+      // prefer secure_url
+      const url = json.secure_url || json.url;
+      if(!url) throw new Error("Upload succeeded but no URL returned");
+
+      postMediaUrl.value = url;
+      upProgBar.style.width = "100%";
+      upHint.textContent = "Uploaded ✓ URL filled in.";
+      toast("Upload complete");
+    }catch(e){
+      console.error(e);
+      upHint.textContent = "Upload failed.";
+      toast(e?.message || "Upload failed");
+      upProgBar.style.width = "0%";
+      upProg.style.display = "none";
+    }finally{
+      btnUpload.disabled = false;
+    }
+  };
+
+  // ========= AUTH STATE =========
   onAuthStateChanged(auth, async (user) => {
     me = user || null;
 
@@ -870,7 +954,6 @@
       btnAuth.style.display = "";
       btnSignOut.style.display = "none";
       btnCreate.disabled = true;
-      toast("Signed out");
       await refreshProfileUI();
       await refreshMyPosts();
       return;
@@ -881,20 +964,20 @@
     btnCreate.disabled = false;
 
     authState.textContent = `Signed in: ${me.displayName || me.email || "User"}`;
-    toast("Signed in");
 
     try{
-      await ensureUserDoc(me);
+      await ensureProfileDoc(me);
     }catch(e){
       console.error(e);
-      toast("Profile init failed (check rules)");
+      // This is the “profile create/save” rules mismatch symptom
+      toast("Profile init failed (Firestore rules mismatch)");
     }
 
     await refreshProfileUI();
     await refreshMyPosts();
   });
 
-  // ====== initial load ======
+  // initial
   showFeed();
   fetchPage(true);
 </script>
