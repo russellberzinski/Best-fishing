@@ -3,983 +3,520 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AnglerPage — Free Feed</title>
+  <title>BestFishingSecrets — Feed</title>
   <style>
     :root{
-      --bg:#0b120d; --card:#121b12; --text:#f3f1e7; --muted:#c9c2aa; --line:#2c3a2b; --accent:#7aa35a;
-      --danger:#ff6b6b; --ok:#77d18a;
+      --bg:#0b1220; --card:#0f1a33; --text:#e8edf7; --muted:#b7c0d6; --line:#223152;
+      --accent:#60a5fa;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-    a{color:inherit}
-    header{
-      position:sticky;top:0;z-index:10;
-      background:rgba(18,27,18,.92);backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--line);
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:var(--text)}
+    header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+    h1{margin:0;font-size:18px}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .status{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:12px;color:var(--muted);white-space:pre-wrap}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    button,input,select,textarea{font:inherit}
+    button{
+      border:1px solid var(--line);background:var(--card);color:var(--text);
+      padding:10px 12px;border-radius:12px;cursor:pointer
     }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 16px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{
-      width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
-      background:linear-gradient(180deg, rgba(122,163,90,.28), rgba(176,138,90,.12));
-      border:1px solid rgba(255,255,255,.10);
-      font-weight:800;
-    }
-    .brand h1{font-size:16px;margin:0;line-height:1.1}
-    .brand small{display:block;color:var(--muted);font-weight:500;margin-top:2px}
-    .nav{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.18);
-      color:var(--text);
-      padding:10px 12px;border-radius:12px;
-      cursor:pointer; transition:.15s; font-weight:650;
-    }
-    .btn:hover{filter:brightness(1.08)}
-    .btn.primary{background:rgba(122,163,90,.22);border-color:rgba(122,163,90,.42)}
-    .btn.danger{background:rgba(255,107,107,.16);border-color:rgba(255,107,107,.36)}
-    .btn.ghost{background:transparent}
-    .btn.small{padding:8px 10px;border-radius:10px;font-weight:650}
-    .pill{
-      display:inline-flex;gap:8px;align-items:center;
-      padding:6px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.18);
-      color:var(--muted); font-size:12px;
-    }
-    .grid{display:grid;grid-template-columns: 1fr; gap:12px; padding:16px}
-    .card{
+    button:hover{filter:brightness(1.1)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
+    .title{font-weight:800;margin:0 0 6px;font-size:16px}
+    .meta{color:var(--muted);font-size:13px;margin:0 0 10px}
+    .price{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0b1220;font-weight:800}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .form{
+      border:1px solid var(--line);
+      border-radius:16px;
       background:var(--card);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:18px;
-      box-shadow:0 10px 26px rgba(0,0,0,.25);
-      overflow:hidden;
+      padding:14px;
+      margin-bottom:14px;
     }
-    .card .pad{padding:14px}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .between{justify-content:space-between}
-    .muted{color:var(--muted)}
-    .divider{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
-    .avatar{
-      width:40px;height:40px;border-radius:14px;flex:0 0 auto;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.06);
-      object-fit:cover;
+    .form h2{margin:0 0 10px;font-size:15px}
+    .fields{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
     }
-    .who .name{font-weight:800}
-    .who .meta{font-size:12px;color:var(--muted);margin-top:2px}
-    .post-media{background:#0a0f0b}
-    .post-media img, .post-media video{
-      width:100%; display:block; max-height:520px; object-fit:cover;
-    }
-    .actions{display:flex;gap:8px;flex-wrap:wrap}
-    .action{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.18);
-      cursor:pointer; user-select:none; font-weight:700;
-    }
-    .action:hover{filter:brightness(1.08)}
-    .action small{color:var(--muted);font-weight:700}
-    input, textarea, select{
-      width:100%; padding:11px 12px; border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.22);
-      color:var(--text); outline:none;
-    }
-    textarea{min-height:92px;resize:vertical}
-    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
-    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media (max-width:720px){ .two{grid-template-columns:1fr} }
-    .toast{
-      position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
-      background:rgba(18,27,18,.95);border:1px solid rgba(255,255,255,.10);
-      padding:10px 12px;border-radius:12px;
-      max-width:92vw; display:none;
-      box-shadow:0 12px 28px rgba(0,0,0,.35);
-      z-index:99;
-    }
-    .modal-backdrop{
-      position:fixed;inset:0;background:rgba(0,0,0,.55);
-      display:none;align-items:center;justify-content:center;z-index:50;
-      padding:16px;
-    }
-    .modal{
-      width:min(760px, 100%);
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background:var(--card);
-      box-shadow:0 20px 60px rgba(0,0,0,.5);
-      overflow:hidden;
-    }
-    .modal .head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-bottom:1px solid rgba(255,255,255,.08)}
-    .modal .body{padding:14px}
-    .modal .foot{padding:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-    .hint{font-size:12px;color:var(--muted);margin-top:8px}
-    .kpi{display:flex;gap:8px;flex-wrap:wrap}
-    .kpi .pill strong{color:var(--text)}
-    .progress{
-      display:none;
+    .fields .full{grid-column:1 / -1}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    input,select,textarea{
       width:100%;
-      height:10px;
-      border-radius:999px;
-      background:rgba(255,255,255,.08);
-      overflow:hidden;
-      margin-top:10px;
+      border:1px solid var(--line);
+      background:#0b1220;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      outline:none;
     }
-    .progress > div{
-      height:100%;
-      width:0%;
-      background:rgba(122,163,90,.6);
-      transition:width .15s ease;
+    textarea{min-height:90px;resize:vertical}
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
+    .ok{color:#bbf7d0}
+    .post-img{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      display:block;
+      margin:0 0 10px 0;
+      background:#0b1220;
+    }
+    .img-note{font-size:12px;color:var(--muted);margin-top:6px}
+    .pill{
+      border:1px solid var(--line);
+      background:#0b1220;
+      padding:8px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    @media (max-width:720px){
+      .fields{grid-template-columns:1fr}
     }
   </style>
 </head>
-
 <body>
-<header>
+  <header><h1>BestFishingSecrets — Live Feed</h1></header>
+
   <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">AP</div>
-        <div>
-          <h1>AnglerPage</h1>
-          <small>Free fishing feed • Cloudinary media</small>
-        </div>
-      </div>
+    <div id="status" class="status">Loading…</div>
 
-      <div class="nav">
-        <button id="tabFeed" class="btn small primary">Feed</button>
-        <button id="tabProfile" class="btn small">My Profile</button>
-        <button id="btnCreate" class="btn small primary">+ Post</button>
-        <button id="btnAuth" class="btn small">Sign in</button>
-        <button id="btnSignOut" class="btn small danger" style="display:none;">Sign out</button>
-      </div>
+    <!-- Auth row inserted by JS -->
+
+    <div class="row" style="margin-top:8px">
+      <span class="pill">✅ Anyone can browse posts</span>
+      <span class="pill">🔒 Sign-in required to post</span>
     </div>
 
-    <div class="row between" style="margin-top:10px;">
-      <div class="row" style="gap:10px;">
-        <span id="authState" class="pill">Not signed in</span>
-        <span class="pill">Collections: <strong>profiles</strong>, <strong>posts</strong></span>
-      </div>
-      <div class="row" style="gap:10px;">
-        <input id="search" placeholder="Search titles, captions, creators…" style="width:min(360px,70vw)" />
-      </div>
-    </div>
-  </div>
-</header>
-
-<main class="wrap">
-  <div class="grid">
-
-    <!-- FEED -->
-    <section id="viewFeed" class="card">
-      <div class="pad">
-        <div class="row between">
-          <div>
-            <div style="font-weight:900;font-size:16px;">Latest posts</div>
-            <div class="muted" style="font-size:12px;margin-top:2px;">Everyone can view. Posting requires sign-in.</div>
-          </div>
-          <div class="kpi">
-            <span class="pill">Loaded: <strong id="kpiLoaded">0</strong></span>
-          </div>
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div id="feedList"></div>
-      <div class="pad" id="feedEmpty" style="display:none;">
-        <div class="muted">No posts yet. Be the first to post.</div>
-      </div>
-      <div class="pad">
-        <button id="btnLoadMore" class="btn">Load more</button>
-      </div>
-    </section>
-
-    <!-- PROFILE -->
-    <section id="viewProfile" class="card" style="display:none;">
-      <div class="pad">
-        <div class="row between">
-          <div class="row" style="gap:12px;">
-            <img id="meAvatar" class="avatar" alt="me" />
-            <div class="who">
-              <div id="meName" class="name">—</div>
-              <div id="meMeta" class="meta">Sign in to manage your profile</div>
-            </div>
-          </div>
-          <div class="actions">
-            <button id="btnEditProfile" class="btn small">Edit profile</button>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="two">
-          <div>
-            <label>Bio</label>
-            <div id="meBio" class="muted">—</div>
-          </div>
-          <div>
-            <label>Location</label>
-            <div id="meLocation" class="muted">—</div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row between">
-          <div style="font-weight:900;">My posts</div>
-          <span class="pill">Only you can delete your posts</span>
-        </div>
-      </div>
-      <div id="myPosts"></div>
-      <div class="pad" id="myPostsEmpty" style="display:none;">
-        <div class="muted">You haven’t posted anything yet.</div>
-      </div>
-    </section>
-
-  </div>
-</main>
-
-<!-- CREATE POST MODAL -->
-<div id="createBackdrop" class="modal-backdrop">
-  <div class="modal">
-    <div class="head">
-      <div style="font-weight:900;">Create a post</div>
-      <button class="btn small ghost" onclick="closeCreate()">✕</button>
-    </div>
-
-    <div class="body">
-      <div class="two">
-        <div>
-          <label>Title</label>
-          <input id="postTitle" maxlength="120" placeholder="Quick title (optional)" />
-        </div>
-        <div>
-          <label>Media type</label>
-          <select id="postType">
-            <option value="image">Image</option>
-            <option value="video">Video</option>
+    <div class="form">
+      <h2>Browse</h2>
+      <div class="fields">
+        <div class="full">
+          <label for="filterState">Filter by state (optional)</label>
+          <select id="filterState">
+            <option value="">All states</option>
+            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+            <option>Wisconsin</option><option>Wyoming</option>
           </select>
         </div>
       </div>
 
-      <label>Upload media (Cloudinary)</label>
-      <div class="two">
+      <div class="row" style="margin-top:10px">
+        <button id="reloadBtn" type="button">Reload posts</button>
+      </div>
+      <div class="hint">Tip: choose a state to filter, then tap “Reload posts”.</div>
+    </div>
+
+    <div class="form">
+      <h2>Post a Catch</h2>
+      <div class="fields">
         <div>
-          <input id="postFile" type="file" accept="image/*,video/*" />
-          <div class="hint">Pick a file and upload; we’ll fill the Media URL for you.</div>
+          <label for="title">Title</label>
+          <input id="title" placeholder="e.g., 5lb bass at dawn" />
         </div>
+
         <div>
-          <button id="btnUpload" class="btn" type="button" onclick="uploadToCloudinary()">Upload</button>
-          <div class="progress" id="upProg"><div id="upProgBar"></div></div>
-          <div class="hint" id="upHint"></div>
+          <label for="state">State</label>
+          <select id="state">
+            <option value="">Select a state…</option>
+            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+            <option>Wisconsin</option><option>Wyoming</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="price">Price (USD)</label>
+          <input id="price" type="number" step="0.01" min="0" placeholder="9.99" />
+        </div>
+
+        <div>
+          <label for="previewUrl">Preview link (optional)</label>
+          <input id="previewUrl" placeholder="https://..." />
+        </div>
+
+        <div class="full">
+          <label for="fullUrl">Full link (optional)</label>
+          <input id="fullUrl" placeholder="https://..." />
+        </div>
+
+        <div class="full">
+          <label for="photo">Photo (uploaded to Cloudinary)</label>
+          <input id="photo" type="file" accept="image/*" />
+          <div class="img-note">Optional, but recommended. Large files may take longer on mobile.</div>
+        </div>
+
+        <div class="full">
+          <label for="secretLocation">Secret location (stored, not displayed)</label>
+          <textarea id="secretLocation" placeholder="Example: Lake name, GPS pin, access details…"></textarea>
+          <div class="hint">This is stored in Firestore but never shown on the public feed.</div>
         </div>
       </div>
 
-      <label>Media URL (auto-filled after upload, or paste your own)</label>
-      <input id="postMediaUrl" maxlength="800" placeholder="https://..." />
-      <div class="hint">Rules allow http(s) URLs. Cloudinary “secure_url” works best.</div>
-
-      <label>Caption</label>
-      <textarea id="postCaption" maxlength="1000" placeholder="Tell the story…"></textarea>
-
-      <div class="two">
-        <div>
-          <label>Tags (comma-separated)</label>
-          <input id="postTags" maxlength="200" placeholder="bass, kayak, river" />
-        </div>
-        <div>
-          <label>State (optional)</label>
-          <input id="postState" maxlength="30" placeholder="WI" />
-        </div>
+      <div class="row" style="margin-top:10px">
+        <button id="postBtn" disabled>Sign in to post</button>
       </div>
-
-      <div class="hint">Free feed: no prices, no unlocks.</div>
+      <div id="postHint" class="hint">You can browse without signing in. Sign in only if you want to post.</div>
     </div>
 
-    <div class="foot">
-      <button class="btn" onclick="closeCreate()">Cancel</button>
-      <button id="btnPublish" class="btn primary" onclick="publishPost()">Publish</button>
-    </div>
+    <div id="grid" class="grid"></div>
   </div>
-</div>
 
-<!-- EDIT PROFILE MODAL -->
-<div id="profileBackdrop" class="modal-backdrop">
-  <div class="modal">
-    <div class="head">
-      <div style="font-weight:900;">Edit profile</div>
-      <button class="btn small ghost" onclick="closeProfile()">✕</button>
-    </div>
-    <div class="body">
-      <label>Display name</label>
-      <input id="profileName" maxlength="60" placeholder="Your name" />
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      serverTimestamp,
+      query,
+      orderBy,
+      where
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-      <label>Avatar URL (optional)</label>
-      <input id="profileAvatar" maxlength="800" placeholder="https://..." />
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-      <div class="two">
-        <div>
-          <label>Location (optional)</label>
-          <input id="profileLocation" maxlength="60" placeholder="Madison, WI" />
-        </div>
-        <div>
-          <label>Favorite species (optional)</label>
-          <input id="profileSpecies" maxlength="60" placeholder="Walleye" />
-        </div>
-      </div>
+    // ====== DOM ======
+    const statusEl = document.getElementById("status");
+    const gridEl = document.getElementById("grid");
 
-      <label>Bio (optional)</label>
-      <textarea id="profileBio" maxlength="300" placeholder="A short bio…"></textarea>
+    const filterStateEl = document.getElementById("filterState");
 
-      <div class="hint">Profiles are public. Keep it simple.</div>
-    </div>
-    <div class="foot">
-      <button class="btn" onclick="closeProfile()">Cancel</button>
-      <button id="btnSaveProfile" class="btn primary" onclick="saveProfile()">Save</button>
-    </div>
-  </div>
-</div>
+    const titleEl = document.getElementById("title");
+    const stateEl = document.getElementById("state");
+    const priceEl = document.getElementById("price");
+    const previewUrlEl = document.getElementById("previewUrl");
+    const fullUrlEl = document.getElementById("fullUrl");
+    const secretLocationEl = document.getElementById("secretLocation");
+    const photoEl = document.getElementById("photo");
 
-<div id="toast" class="toast"></div>
+    const postBtn = document.getElementById("postBtn");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const postHintEl = document.getElementById("postHint");
 
-<script type="module">
-  // Firebase (modular)
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import {
-    getAuth, onAuthStateChanged,
-    GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import {
-    getFirestore, doc, getDoc, setDoc, updateDoc,
-    collection, addDoc, serverTimestamp,
-    query, orderBy, limit, startAfter, getDocs, where,
-    deleteDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    // ====== Always show real errors on-page ======
+    window.addEventListener("unhandledrejection", (e) => {
+      statusEl.textContent = "❌ Unhandled promise:\n" + (e.reason?.message || e.reason || e);
+    });
+    window.addEventListener("error", (e) => {
+      statusEl.textContent = "❌ JS error:\n" + (e.message || e);
+    });
 
-  // =======================
-  // 1) FIREBASE CONFIG
-  // =======================
-  const firebaseConfig = {
-    apiKey: "PASTE",
-    authDomain: "PASTE",
-    projectId: "PASTE",
-    storageBucket: "PASTE",
-    messagingSenderId: "PASTE",
-    appId: "PASTE"
-  };
+    // ====== Cloudinary (unsigned upload) ======
+    const CLOUDINARY_CLOUD_NAME = "dhuakqubc";
+    const CLOUDINARY_UPLOAD_PRESET = "emiktt1b";
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
-  // =======================
-  // 2) CLOUDINARY CONFIG
-  // =======================
-  // Keep these the same as before (replace with your real values)
-  const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUD_NAME";
-  const CLOUDINARY_UPLOAD_PRESET = "YOUR_UNSIGNED_UPLOAD_PRESET";
-  // Optional: folder in your Cloudinary media library
-  const CLOUDINARY_FOLDER = "anglerpage";
-
-  // Collections (match common rules we built earlier)
-  const COL_PROFILES = "profiles";
-  const COL_POSTS = "posts";
-
-  // init
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  // UI refs
-  const tabFeed = document.getElementById('tabFeed');
-  const tabProfile = document.getElementById('tabProfile');
-  const viewFeed = document.getElementById('viewFeed');
-  const viewProfile = document.getElementById('viewProfile');
-  const btnAuth = document.getElementById('btnAuth');
-  const btnSignOut = document.getElementById('btnSignOut');
-  const btnCreate = document.getElementById('btnCreate');
-  const authState = document.getElementById('authState');
-  const feedList = document.getElementById('feedList');
-  const feedEmpty = document.getElementById('feedEmpty');
-  const btnLoadMore = document.getElementById('btnLoadMore');
-  const searchBox = document.getElementById('search');
-  const kpiLoaded = document.getElementById('kpiLoaded');
-
-  const meAvatar = document.getElementById('meAvatar');
-  const meName = document.getElementById('meName');
-  const meMeta = document.getElementById('meMeta');
-  const meBio = document.getElementById('meBio');
-  const meLocation = document.getElementById('meLocation');
-  const myPosts = document.getElementById('myPosts');
-  const myPostsEmpty = document.getElementById('myPostsEmpty');
-  const btnEditProfile = document.getElementById('btnEditProfile');
-
-  const createBackdrop = document.getElementById('createBackdrop');
-  const profileBackdrop = document.getElementById('profileBackdrop');
-
-  // form
-  const postTitle = document.getElementById('postTitle');
-  const postType = document.getElementById('postType');
-  const postFile = document.getElementById('postFile');
-  const postMediaUrl = document.getElementById('postMediaUrl');
-  const postCaption = document.getElementById('postCaption');
-  const postTags = document.getElementById('postTags');
-  const postState = document.getElementById('postState');
-  const btnPublish = document.getElementById('btnPublish');
-
-  const profileName = document.getElementById('profileName');
-  const profileAvatar = document.getElementById('profileAvatar');
-  const profileLocation = document.getElementById('profileLocation');
-  const profileSpecies = document.getElementById('profileSpecies');
-  const profileBio = document.getElementById('profileBio');
-  const btnSaveProfile = document.getElementById('btnSaveProfile');
-
-  // upload UI
-  const upProg = document.getElementById('upProg');
-  const upProgBar = document.getElementById('upProgBar');
-  const upHint = document.getElementById('upHint');
-  const btnUpload = document.getElementById('btnUpload');
-
-  // state
-  let me = null;
-  let lastDoc = null;
-  let loading = false;
-  const PAGE_SIZE = 8;
-  let cachedPosts = [];
-
-  // helpers
-  function toast(msg){
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.display = 'block';
-    clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(()=> t.style.display='none', 2400);
-  }
-  function fmtTime(ts){
-    if(!ts) return '—';
-    try{
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleString();
-    }catch(e){ return '—'; }
-  }
-  function sanitizeTags(raw){
-    return (raw || "").split(',')
-      .map(s => s.trim().toLowerCase())
-      .filter(Boolean)
-      .slice(0, 12);
-  }
-  function isHttpUrl(s){ return /^https?:\/\/.+/i.test(s || ""); }
-  function esc(s){
-    return (s ?? "").toString()
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
-  function placeholderAvatar(letter){
-    const L = (letter || "A").toUpperCase();
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
-      `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'>
-        <rect width='100%' height='100%' fill='#1a241a'/>
-        <text x='50%' y='55%' font-size='28' fill='#c9c2aa' text-anchor='middle' font-family='Arial'>${L}</text>
-      </svg>`
-    );
-  }
-
-  // routing
-  function showFeed(){
-    viewFeed.style.display = '';
-    viewProfile.style.display = 'none';
-    tabFeed.classList.add('primary');
-    tabProfile.classList.remove('primary');
-  }
-  function showProfile(){
-    viewFeed.style.display = 'none';
-    viewProfile.style.display = '';
-    tabProfile.classList.add('primary');
-    tabFeed.classList.remove('primary');
-    refreshProfileUI();
-    refreshMyPosts();
-  }
-  tabFeed.onclick = showFeed;
-  tabProfile.onclick = showProfile;
-
-  // modals
-  window.closeCreate = () => { createBackdrop.style.display = 'none'; };
-  window.openCreate  = () => { createBackdrop.style.display = 'flex'; };
-  window.closeProfile = () => { profileBackdrop.style.display = 'none'; };
-  window.openProfile  = () => { profileBackdrop.style.display = 'flex'; };
-
-  createBackdrop.addEventListener('click', (e)=>{ if(e.target === createBackdrop) window.closeCreate(); });
-  profileBackdrop.addEventListener('click', (e)=>{ if(e.target === profileBackdrop) window.closeProfile(); });
-
-  btnCreate.onclick = () => {
-    if(!me){ toast("Sign in to post"); return; }
-    postTitle.value = "";
-    postType.value = "image";
-    postFile.value = "";
-    postMediaUrl.value = "";
-    postCaption.value = "";
-    postTags.value = "";
-    postState.value = "";
-    upHint.textContent = "";
-    upProg.style.display = "none";
-    upProgBar.style.width = "0%";
-    window.openCreate();
-  };
-
-  btnEditProfile.onclick = async () => {
-    if(!me){ toast("Sign in first"); return; }
-    const ref = doc(db, COL_PROFILES, me.uid);
-    const snap = await getDoc(ref);
-    const d = snap.exists() ? snap.data() : {};
-
-    profileName.value = d.displayName || me.displayName || "";
-    profileAvatar.value = d.photoURL || me.photoURL || "";
-    profileLocation.value = d.location || "";
-    profileSpecies.value = d.favoriteSpecies || "";
-    profileBio.value = d.bio || "";
-    window.openProfile();
-  };
-
-  // auth
-  btnAuth.onclick = async () => {
-    const provider = new GoogleAuthProvider();
-    try{
-      await signInWithPopup(auth, provider);
-    }catch(e){
-      // Popup often fails on mobile in-app browsers; redirect is the reliable fallback
-      if((e?.code || "").includes("popup") || (e?.message || "").toLowerCase().includes("popup")){
-        try{
-          await signInWithRedirect(auth, provider);
-        }catch(e2){
-          console.error(e2);
-          toast(e2?.message || "Sign-in failed");
-        }
-      }else{
-        console.error(e);
-        toast(e?.message || "Sign-in failed");
-      }
-    }
-  };
-
-  btnSignOut.onclick = async () => {
-    try{ await signOut(auth); } catch(e){ toast("Sign-out failed"); }
-  };
-
-  // Handle redirect result (important on mobile)
-  try{
-    await getRedirectResult(auth);
-  }catch(e){
-    // ignore unless you want to show it
-  }
-
-  // ========= PROFILES (THIS IS WHERE THE OLD ERROR USUALLY WAS) =========
-  async function ensureProfileDoc(user){
-    // Use setDoc merge so it works whether doc exists or not.
-    const ref = doc(db, COL_PROFILES, user.uid);
-    const base = {
-      uid: user.uid,
-      displayName: user.displayName || "Angler",
-      photoURL: user.photoURL || "",
-      bio: "",
-      location: "",
-      favoriteSpecies: "",
-      updatedAt: serverTimestamp()
+    // ====== Firebase config ======
+    const firebaseConfig = {
+      apiKey: "AIzaSyCndtMlIb_Y_YCP1RO-ctfizRU6q1MGeHY",
+      authDomain: "bestfishingsecrets-932cf.firebaseapp.com",
+      projectId: "bestfishingsecrets-932cf",
+      storageBucket: "bestfishingsecrets-932cf.firebasestorage.app",
+      messagingSenderId: "387299114354",
+      appId: "1:387299114354:web:cbadda074f9dd7083ef1eb",
+      measurementId: "G-Z8L28MXNEG"
     };
-    // createdAt only if doc doesn't exist (avoid rule issues if disallowed to add new fields later)
-    const snap = await getDoc(ref);
-    if(!snap.exists()){
-      await setDoc(ref, { ...base, createdAt: serverTimestamp() }, { merge: true });
-    }else{
-      // don’t blank out user’s fields
-      const d = snap.data() || {};
-      await setDoc(ref, {
-        ...base,
-        displayName: d.displayName || base.displayName,
-        photoURL: d.photoURL || base.photoURL,
-        bio: d.bio || "",
-        location: d.location || "",
-        favoriteSpecies: d.favoriteSpecies || ""
-      }, { merge: true });
-    }
-  }
 
-  window.saveProfile = async () => {
-    if(!me){ toast("Sign in first"); return; }
+    // ====== Init ======
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-    const dn  = (profileName.value || "").trim().slice(0,60);
-    const av  = (profileAvatar.value || "").trim().slice(0,800);
-    const loc = (profileLocation.value || "").trim().slice(0,60);
-    const sp  = (profileSpecies.value || "").trim().slice(0,60);
-    const bio = (profileBio.value || "").trim().slice(0,300);
-
-    if(av && !isHttpUrl(av)){ toast("Avatar URL must start with http(s)://"); return; }
-
-    btnSaveProfile.disabled = true;
-    try{
-      await setDoc(doc(db, COL_PROFILES, me.uid), {
-        uid: me.uid,
-        displayName: dn || (me.displayName || "Angler"),
-        photoURL: av || "",
-        location: loc || "",
-        favoriteSpecies: sp || "",
-        bio: bio || "",
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      toast("Profile saved");
-      window.closeProfile();
-      await refreshProfileUI();
-      await refreshMyPosts();
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Save failed (check rules)");
-    }finally{
-      btnSaveProfile.disabled = false;
-    }
-  };
-
-  async function refreshProfileUI(){
-    if(!me){
-      meAvatar.src = "";
-      meName.textContent = "—";
-      meMeta.textContent = "Sign in to manage your profile";
-      meBio.textContent = "—";
-      meLocation.textContent = "—";
-      return;
-    }
-    const ref = doc(db, COL_PROFILES, me.uid);
-    const snap = await getDoc(ref);
-    const d = snap.exists() ? snap.data() : {};
-
-    const dn = d.displayName || me.displayName || "Angler";
-    const photo = d.photoURL || me.photoURL || "";
-    meAvatar.src = photo || placeholderAvatar((dn[0] || "A"));
-    meName.textContent = dn;
-    meMeta.textContent = me.email || "";
-    meBio.textContent = d.bio ? d.bio : "—";
-    meLocation.textContent = d.location ? d.location : "—";
-  }
-
-  // ========= POSTS =========
-  function renderPostCard(p, opts={mine:false}){
-    const media = p.mediaUrl ? (p.type === 'video'
-      ? `<video src="${esc(p.mediaUrl)}" controls playsinline></video>`
-      : `<img src="${esc(p.mediaUrl)}" alt="post" loading="lazy" />`)
-      : "";
-
-    const tags = (p.tags || []).map(t => `<span class="pill">#${esc(t)}</span>`).join(" ");
-    const mineBtns = opts.mine ? `<button class="btn small danger" data-del="${esc(p.id)}">Delete</button>` : "";
-
-    const authorLetter = (p.authorName || "A")[0] || "A";
-    const authorPhoto = (p.authorPhoto && isHttpUrl(p.authorPhoto)) ? p.authorPhoto : placeholderAvatar(authorLetter);
-
-    return `
-      <article class="card" style="margin:12px 16px;">
-        <div class="pad">
-          <div class="row between">
-            <div class="row" style="gap:12px;">
-              <img class="avatar" src="${esc(authorPhoto)}" alt="avatar" />
-              <div class="who">
-                <div class="name">${esc(p.authorName || "Angler")}</div>
-                <div class="meta">${esc(fmtTime(p.createdAt))}${p.state ? " • "+esc(p.state) : ""}</div>
-              </div>
-            </div>
-            <div class="row" style="gap:8px;">${mineBtns}</div>
-          </div>
-
-          ${p.title ? `<div style="font-weight:900;margin-top:10px;">${esc(p.title)}</div>` : ""}
-          ${p.caption ? `<div class="muted" style="margin-top:8px;white-space:pre-wrap;">${esc(p.caption)}</div>` : ""}
-          ${tags ? `<div class="row" style="margin-top:10px;gap:8px;">${tags}</div>` : ""}
-
-          <div class="divider"></div>
-
-          <div class="actions">
-            <div class="action" data-copy="${esc(p.id)}">🔗 Share</div>
-          </div>
-        </div>
-        ${media ? `<div class="post-media">${media}</div>` : ""}
-      </article>
+    // ====== Auth UI ======
+    const authRow = document.createElement("div");
+    authRow.className = "row";
+    authRow.innerHTML = `
+      <button id="loginBtn" type="button">Sign in with Google</button>
+      <button id="logoutBtn" type="button" style="display:none">Sign out</button>
+      <span id="userInfo" class="meta"></span>
     `;
-  }
+    statusEl.insertAdjacentElement("afterend", authRow);
 
-  function wirePostActions(root){
-    root.querySelectorAll('[data-copy]').forEach(el=>{
-      el.onclick = async () => {
-        const id = el.getAttribute('data-copy');
-        const url = location.origin + location.pathname + "#post=" + id;
-        try{
-          await navigator.clipboard.writeText(url);
-          toast("Link copied");
-        }catch(e){
-          toast("Copy failed");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userInfo = document.getElementById("userInfo");
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+
+      if (user) {
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        userInfo.textContent = `Signed in as ${user.displayName || user.email || "User"}`;
+        postBtn.disabled = false;
+        postBtn.textContent = "Post catch";
+        postHintEl.textContent = "✅ You’re signed in — you can post now.";
+        postHintEl.classList.add("ok");
+      } else {
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        userInfo.textContent = "Not signed in";
+        postBtn.disabled = true;
+        postBtn.textContent = "Sign in to post";
+        postHintEl.textContent = "You can browse without signing in. Sign in only if you want to post.";
+        postHintEl.classList.remove("ok");
+      }
+    });
+
+    // Handle redirect sign-in result (mobile fallback)
+    try{
+      await getRedirectResult(auth);
+    }catch(err){
+      statusEl.textContent = "⚠️ Redirect sign-in error:\n" + (err?.message || String(err));
+    }
+
+    loginBtn.addEventListener("click", async () => {
+      statusEl.textContent = "Signing in…";
+      try {
+        await signInWithPopup(auth, provider);
+        statusEl.textContent = "✅ Signed in.";
+      } catch (e) {
+        const msg = (e?.message || "").toLowerCase();
+        const code = (e?.code || "").toLowerCase();
+        const looksLikePopupBlocked =
+          code.includes("popup") || msg.includes("popup") || msg.includes("blocked") || msg.includes("closed");
+
+        if (looksLikePopupBlocked) {
+          statusEl.textContent = "Popup blocked. Switching to redirect sign-in…";
+          await signInWithRedirect(auth, provider);
+          return;
         }
-      };
+
+        statusEl.textContent = "❌ Sign-in failed:\n" + (e?.message || String(e));
+      }
     });
 
-    root.querySelectorAll('[data-del]').forEach(el=>{
-      el.onclick = async () => {
-        if(!me){ toast("Sign in"); return; }
-        const id = el.getAttribute('data-del');
-        if(!confirm("Delete this post?")) return;
-        try{
-          await deleteDoc(doc(db, COL_POSTS, id));
-          toast("Deleted");
-          await refreshMyPosts();
-          await fetchPage(true);
-        }catch(e){
-          console.error(e);
-          toast(e?.message || "Delete failed (check rules)");
-        }
-      };
-    });
-  }
-
-  async function fetchPage(reset=false){
-    if(loading) return;
-    loading = true;
-    btnLoadMore.disabled = true;
-
-    try{
-      if(reset){
-        lastDoc = null;
-        cachedPosts = [];
-        feedList.innerHTML = "";
-        kpiLoaded.textContent = "0";
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        statusEl.textContent = "Signed out.";
+      } catch (e) {
+        statusEl.textContent = "❌ Sign-out failed:\n" + (e?.message || String(e));
       }
-
-      const base = collection(db, COL_POSTS);
-      let qy = query(base, orderBy("createdAt","desc"), limit(PAGE_SIZE));
-      if(lastDoc) qy = query(base, orderBy("createdAt","desc"), startAfter(lastDoc), limit(PAGE_SIZE));
-
-      const snap = await getDocs(qy);
-      if(snap.empty && cachedPosts.length === 0){
-        feedEmpty.style.display = "";
-        return;
-      }
-      feedEmpty.style.display = "none";
-
-      lastDoc = snap.docs[snap.docs.length-1] || lastDoc;
-      const items = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      cachedPosts.push(...items);
-
-      kpiLoaded.textContent = String(cachedPosts.length);
-
-      feedList.insertAdjacentHTML("beforeend", items.map(p => renderPostCard(p)).join(""));
-      wirePostActions(feedList);
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Failed to load feed");
-    }finally{
-      loading = false;
-      btnLoadMore.disabled = false;
-    }
-  }
-
-  btnLoadMore.onclick = () => fetchPage(false);
-
-  // client-side search on cached posts
-  function applySearch(){
-    const q = (searchBox.value || "").trim().toLowerCase();
-    if(!q){
-      feedList.innerHTML = cachedPosts.map(p => renderPostCard(p)).join("");
-      wirePostActions(feedList);
-      feedEmpty.style.display = cachedPosts.length ? "none" : "";
-      kpiLoaded.textContent = String(cachedPosts.length);
-      return;
-    }
-
-    const filtered = cachedPosts.filter(p => {
-      const hay = [
-        p.title, p.caption, p.authorName, (p.tags||[]).join(" "), p.state
-      ].join(" ").toLowerCase();
-      return hay.includes(q);
     });
 
-    feedList.innerHTML = filtered.map(p => renderPostCard(p)).join("");
-    wirePostActions(feedList);
-    feedEmpty.style.display = filtered.length ? "none" : "";
-    kpiLoaded.textContent = String(filtered.length);
-  }
-
-  searchBox.addEventListener('input', applySearch);
-
-  // publish post
-  window.publishPost = async () => {
-    if(!me){ toast("Sign in to post"); return; }
-
-    const title = (postTitle.value || "").trim().slice(0,120);
-    const type = (postType.value === "video") ? "video" : "image";
-    const mediaUrl = (postMediaUrl.value || "").trim().slice(0,800);
-    const caption = (postCaption.value || "").trim().slice(0,1000);
-    const tags = sanitizeTags(postTags.value || "");
-    const state = (postState.value || "").trim().slice(0,30);
-
-    if(mediaUrl && !isHttpUrl(mediaUrl)){ toast("Media URL must start with http(s)://"); return; }
-    if(!caption && !mediaUrl && !title){ toast("Add at least a title, caption, or media URL"); return; }
-
-    btnPublish.disabled = true;
-    try{
-      // denormalize profile for feed (common + fast)
-      const pref = doc(db, COL_PROFILES, me.uid);
-      const psnap = await getDoc(pref);
-      const p = psnap.exists() ? psnap.data() : {};
-
-      await addDoc(collection(db, COL_POSTS), {
-        ownerId: me.uid,
-        authorName: p.displayName || me.displayName || "Angler",
-        authorPhoto: p.photoURL || me.photoURL || "",
-        title,
-        caption,
-        type,
-        mediaUrl,
-        tags,
-        state,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-
-      toast("Posted!");
-      window.closeCreate();
-      await fetchPage(true);
-      showFeed();
-      await refreshMyPosts();
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Publish failed (check rules)");
-    }finally{
-      btnPublish.disabled = false;
-    }
-  };
-
-  async function refreshMyPosts(){
-    if(!me){
-      myPosts.innerHTML = "";
-      myPostsEmpty.style.display = "";
-      return;
+    // ====== Helpers ======
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
 
-    myPosts.innerHTML = "";
-    myPostsEmpty.style.display = "none";
-
-    try{
-      const qy = query(
-        collection(db, COL_POSTS),
-        where("ownerId","==",me.uid),
-        orderBy("createdAt","desc"),
-        limit(30)
-      );
-
-      const snap = await getDocs(qy);
-      if(snap.empty){
-        myPostsEmpty.style.display = "";
-        return;
-      }
-
-      const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
-      myPosts.innerHTML = items.map(p => renderPostCard(p, {mine:true})).join("");
-      wirePostActions(myPosts);
-    }catch(e){
-      console.error(e);
-      toast(e?.message || "Failed to load your posts");
-    }
-  }
-
-  // ========= CLOUDINARY UPLOAD =========
-  window.uploadToCloudinary = async () => {
-    if(!me){ toast("Sign in first"); return; }
-    const file = postFile.files && postFile.files[0];
-    if(!file){ toast("Choose a file first"); return; }
-    if(!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME"){
-      toast("Set your Cloudinary cloud name/preset in the code first");
-      return;
+    function isValidUrl(s){
+      if (!s) return true;
+      try { new URL(s); return true; } catch { return false; }
     }
 
-    // Cloudinary unsigned upload endpoint
-    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(CLOUDINARY_CLOUD_NAME)}/auto/upload`;
+    function cardHTML(p){
+      const title = p.title ?? "Untitled catch";
+      const state = p.state ?? "Unknown";
+      const priceRaw = p.price;
+      const price = (typeof priceRaw === "number") ? priceRaw.toFixed(2) : (priceRaw ?? "—");
 
-    btnUpload.disabled = true;
-    upHint.textContent = "Uploading…";
-    upProg.style.display = "block";
-    upProgBar.style.width = "8%";
+      const previewUrl = p.previewUrl ?? "";
+      const fullUrl = p.fullUrl ?? "";
+      const imageUrl = p.imageUrl ?? "";
 
-    try{
+      return `
+        <div class="card">
+          ${imageUrl ? `<img class="post-img" src="${escapeHtml(imageUrl)}" alt="Catch photo" loading="lazy" />` : ""}
+          <p class="title">${escapeHtml(title)}</p>
+          <p class="meta">State: <b>${escapeHtml(state)}</b></p>
+          <p class="meta"><span class="price">$${escapeHtml(price)}</span></p>
+          ${previewUrl ? `<p class="meta"><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">Preview link</a></p>` : ""}
+          ${fullUrl ? `<p class="meta"><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener">Full link</a></p>` : ""}
+        </div>
+      `;
+    }
+
+    async function uploadToCloudinary(file){
+      const maxMB = 12;
+      const sizeMB = file.size / (1024*1024);
+      if (sizeMB > maxMB) throw new Error(`Image too large (${sizeMB.toFixed(1)}MB). Choose under ${maxMB}MB.`);
+      if (!file.type.startsWith("image/")) throw new Error("Selected file is not an image.");
+
       const fd = new FormData();
       fd.append("file", file);
       fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-      if(CLOUDINARY_FOLDER) fd.append("folder", CLOUDINARY_FOLDER);
 
-      // Progress: fetch doesn’t expose upload progress reliably; we simulate steps
-      const timer = setInterval(()=>{
-        const cur = parseFloat(upProgBar.style.width) || 0;
-        if(cur < 92) upProgBar.style.width = (cur + 6) + "%";
-      }, 180);
+      const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: "POST", body: fd });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Cloudinary upload failed (${res.status}). ${text}`);
+      }
+      return await res.json();
+    }
 
-      const res = await fetch(endpoint, { method:"POST", body: fd });
-      clearInterval(timer);
+    // ====== Load posts (public, no auth required) ======
+    async function loadPosts(){
+      gridEl.innerHTML = "";
+      statusEl.textContent = "Loading posts…";
 
-      const json = await res.json();
-      if(!res.ok){
-        console.error(json);
-        throw new Error(json?.error?.message || "Cloudinary upload failed");
+      const chosenState = filterStateEl.value.trim();
+
+      try{
+        let snap;
+        try{
+          const base = collection(db, "posts");
+
+          // Prefer ordered reads; add optional filter
+          const q = chosenState
+            ? query(base, where("state", "==", chosenState), orderBy("createdAt", "desc"))
+            : query(base, orderBy("createdAt", "desc"));
+
+          snap = await getDocs(q);
+        }catch(e){
+          // If index/orderBy fails (common early on), fallback to basic read
+          snap = await getDocs(collection(db, "posts"));
+        }
+
+        if (!snap || snap.empty){
+          statusEl.textContent = chosenState
+            ? `No posts found for ${chosenState} yet.`
+            : "No posts yet. Sign in if you want to post the first one.";
+          return;
+        }
+
+        // If we fell back to unordered read, apply filter client-side too
+        let posts = [];
+        snap.forEach(d => posts.push(d.data()));
+
+        if (chosenState) {
+          posts = posts.filter(p => (p.state || "").trim() === chosenState);
+        }
+
+        if (!posts.length) {
+          statusEl.textContent = `No posts found for ${chosenState} yet.`;
+          return;
+        }
+
+        let html = "";
+        for (const p of posts) html += cardHTML(p);
+        gridEl.innerHTML = html;
+
+        statusEl.textContent = chosenState
+          ? `Loaded ${posts.length} post(s) for ${chosenState}.`
+          : `Loaded ${posts.length} post(s).`;
+      }catch(err){
+        statusEl.textContent =
+          "❌ Error loading posts.\n\nMost common causes:\n- Firestore Rules blocking reads\n- Firestore not created\n- Network/adblock\n\nDetails:\n" + (err?.message || String(err));
+      }
+    }
+
+    async function postCatch(){
+      if (!currentUser) {
+        statusEl.textContent = "❌ Please sign in first to post.";
+        return;
       }
 
-      // prefer secure_url
-      const url = json.secure_url || json.url;
-      if(!url) throw new Error("Upload succeeded but no URL returned");
+      const title = titleEl.value.trim();
+      const state = stateEl.value.trim();
+      const priceStr = priceEl.value.trim();
+      const previewUrl = previewUrlEl.value.trim();
+      const fullUrl = fullUrlEl.value.trim();
+      const secretLocation = secretLocationEl.value.trim();
 
-      postMediaUrl.value = url;
-      upProgBar.style.width = "100%";
-      upHint.textContent = "Uploaded ✓ URL filled in.";
-      toast("Upload complete");
-    }catch(e){
-      console.error(e);
-      upHint.textContent = "Upload failed.";
-      toast(e?.message || "Upload failed");
-      upProgBar.style.width = "0%";
-      upProg.style.display = "none";
-    }finally{
-      btnUpload.disabled = false;
+      if (!title) { statusEl.textContent = "❌ Please enter a title."; return; }
+      if (!state) { statusEl.textContent = "❌ Please select a state."; return; }
+      if (priceStr === "" || Number.isNaN(Number(priceStr))) { statusEl.textContent = "❌ Please enter a valid price."; return; }
+      if (!isValidUrl(previewUrl) || !isValidUrl(fullUrl)) { statusEl.textContent = "❌ One of your links is not a valid URL."; return; }
+
+      postBtn.disabled = true;
+
+      let imageUrl = null;
+      let imagePublicId = null;
+
+      try{
+        const file = photoEl.files && photoEl.files[0] ? photoEl.files[0] : null;
+        if (file) {
+          statusEl.textContent = "Uploading photo…";
+          const uploaded = await uploadToCloudinary(file);
+          imageUrl = uploaded.secure_url || uploaded.url || null;
+          imagePublicId = uploaded.public_id || null;
+          if (!imageUrl) throw new Error("Upload succeeded but no image URL was returned.");
+        }
+
+        statusEl.textContent = "Posting…";
+
+        await addDoc(collection(db, "posts"), {
+          title,
+          state,
+          price: Number(priceStr),
+          previewUrl: previewUrl || null,
+          fullUrl: fullUrl || null,
+          imageUrl: imageUrl,
+          imagePublicId: imagePublicId,
+          secretLocation: secretLocation || null,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || null,
+          userEmail: currentUser.email || null,
+          createdAt: serverTimestamp()
+        });
+
+        titleEl.value = "";
+        stateEl.value = "";
+        priceEl.value = "";
+        previewUrlEl.value = "";
+        fullUrlEl.value = "";
+        secretLocationEl.value = "";
+        photoEl.value = "";
+
+        statusEl.textContent = "✅ Posted!";
+        await loadPosts();
+      }catch(err){
+        statusEl.textContent = "❌ Post failed.\n\nDetails:\n" + (err?.message || String(err));
+      }finally{
+        postBtn.disabled = !currentUser;
+      }
     }
-  };
 
-  // ========= AUTH STATE =========
-  onAuthStateChanged(auth, async (user) => {
-    me = user || null;
+    postBtn.addEventListener("click", postCatch);
+    reloadBtn.addEventListener("click", loadPosts);
+    filterStateEl.addEventListener("change", loadPosts);
 
-    if(!me){
-      authState.textContent = "Not signed in";
-      btnAuth.style.display = "";
-      btnSignOut.style.display = "none";
-      btnCreate.disabled = true;
-      await refreshProfileUI();
-      await refreshMyPosts();
-      return;
-    }
-
-    btnAuth.style.display = "none";
-    btnSignOut.style.display = "";
-    btnCreate.disabled = false;
-
-    authState.textContent = `Signed in: ${me.displayName || me.email || "User"}`;
-
-    try{
-      await ensureProfileDoc(me);
-    }catch(e){
-      console.error(e);
-      // This is the “profile create/save” rules mismatch symptom
-      toast("Profile init failed (Firestore rules mismatch)");
-    }
-
-    await refreshProfileUI();
-    await refreshMyPosts();
-  });
-
-  // initial
-  showFeed();
-  fetchPage(true);
-</script>
+    // Start
+    await loadPosts();
+  </script>
 </body>
 </html>
